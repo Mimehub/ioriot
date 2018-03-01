@@ -1,0 +1,6 @@
+*.ko
+*.o
+docs/html/
+docs/latex/
+ioreplay/ioreplay
+systemtap/downloads/
