@@ -321,8 +321,6 @@ static void _hmap_test_l(hmap_s *h)
     void* somedata = (void*)h;
 
     assert(1 == hmap_insert_l(h, 1, (void*)23));
-
-    assert(1 == hmap_insert_l(h, 1, (void*)23));
     assert(1 == hmap_insert_l(h, 5, (void*)123));
 
     assert(1 == hmap_insert_l(h, 3, somedata));
