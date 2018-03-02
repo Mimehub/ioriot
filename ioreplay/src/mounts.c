@@ -111,7 +111,7 @@ void mounts_destroy(mounts_s *m)
 void mounts_trash(mounts_s *m)
 {
     options_s *opts = m->opts;
-    drop_root(opts->user);
+    set_limits_drop_root(opts->user);
     Put("Moving all old files to trash (of previous tests)...");
 
     struct timeval tv;
@@ -159,7 +159,7 @@ void mounts_trash(mounts_s *m)
 void mounts_purge(mounts_s *m)
 {
     options_s *opts = m->opts;
-    drop_root(opts->user);
+    set_limits_drop_root(opts->user);
 
     Out("Purging all data from the following directories:");
 

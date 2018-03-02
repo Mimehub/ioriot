@@ -80,7 +80,7 @@ status_e generate_run(options_s *opts)
     ssize_t read;
     char *line = NULL;
 
-    drop_root(opts->user);
+    set_limits_drop_root(opts->user);
 
     // Reserve first few bytes for meta information
     meta_s *meta = meta_new(g->replay_fd);

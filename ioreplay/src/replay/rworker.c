@@ -119,7 +119,7 @@ status_e rworker_process_lines(rworker_s* w, const long num_lines)
 
     // Drop root privileges, otherwise we may overwrite other system
     // files by accident in case of a bug or user error!
-    drop_root(opts->user);
+    set_limits_drop_root(opts->user);
 
     // Variables required for the time based caluclations
     struct timeval now, start_time;

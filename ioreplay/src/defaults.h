@@ -28,9 +28,13 @@
 /** Controls how many tasks can be queued and buffered per worker thread */
 #define TASK_BUFFER_PER_THREAD 512
 /** Version of I/O Replay */
-#define IOREPLAY_VERSION "0.1"
+#define IOREPLAY_VERSION "0.2-develop"
 /** Copyright information */
 #define IOREPLAY_COPYRIGHT "Mimecast 2017, 2018 (c)"
+/** Max open files resource user limit */
+#define SET_RLIMIT_NOFILE 369216
+/** Max processes resource user limit */
+#define SET_RLIMIT_NPROC 30768
 
 // The following are for debugging purposes only
 

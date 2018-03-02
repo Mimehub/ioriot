@@ -271,17 +271,6 @@ For that ``ioreplay`` makes use of the INIT section in ``io.replay``.
 
 ## 3. Replay
 
-It has to be ensured that user USER can open many files and processes. Add the following to ``/etc/security/limits.d/ioreplay.conf``:
-
-```sh
-cat <<END | sudo tee /etc/security/limits.d/ioreplay.conf
-* soft nofile 369216
-* hard nofile 369216
-* soft nproc 30768
-* hard nproc 30768
-END
-```
-
 To replay the log run:
 
 ```sh

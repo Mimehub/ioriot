@@ -103,7 +103,7 @@ status_e init_run(options_s *opts)
     mounts_init(i->mounts);
 
     // Don't do messy stuff as super user
-    drop_root(opts->user);
+    set_limits_drop_root(opts->user);
 
     // We need to clean up garbish from previous runs!
     if (opts->purge)

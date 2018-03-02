@@ -18,7 +18,7 @@
 
 status_e cleanup_run(options_s *opts)
 {
-    drop_root(opts->user);
+    set_limits_drop_root(opts->user);
     mounts_s *m = mounts_new(opts);
 
     if (opts->purge)

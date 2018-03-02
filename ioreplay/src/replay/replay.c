@@ -144,7 +144,7 @@ status_e replay_run(options_s *opts)
             }
         }
 
-        drop_root(opts->user);
+        set_limits_drop_root(opts->user);
 
         Put("Waiting for worker processes to finish");
         pid_t pid;

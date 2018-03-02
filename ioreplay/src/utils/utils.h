@@ -120,11 +120,15 @@ void chreplace(char *str, char replace, char with);
 void strunquote(char *str);
 
 /**
- * @brief Drop root privileges
+ * @brief Set rlimits and drop root privileges
+ *
+ * This function firsts sets the user resource limits to SET_RLIMIT_NOFILE and
+ * SET_RLIMIT_NPROC and then attempts to drop the root user to the specified
+ * one.
  *
  * @param user The user to switch to
  */
-void drop_root(const char *user);
+void set_limits_drop_root(const char *user);
 
 /**
  * @brief Retrieve current 1 min Linux load average
@@ -161,5 +165,10 @@ bool is_number(char *str);
  * @param data A data pointer passed to the thread.
  */
 void start_pthread(pthread_t *thread, void*(*cb)(void*), void *data);
+
+/**
+ * @brief Testing various of the utilities
+ */
+void utils_test(void);
 
 #endif // UTILS_H

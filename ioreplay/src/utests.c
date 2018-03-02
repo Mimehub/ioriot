@@ -18,13 +18,24 @@
 #include "datas/hmap.h"
 #include "datas/list.h"
 #include "datas/rbuffer.h"
+#include "utils/utils.h"
 
 void utests_run()
 {
-    fprintf(stderr, "Running unit tests\n");
+    fprintf(stderr, "Running utils_test()\n");
+    utils_test();
+
+    fprintf(stderr, "Running amap_test()\n");
     amap_test();
+
+    fprintf(stderr, "Running hmap_test()\n");
     hmap_test();
+
+    fprintf(stderr, "Running list_test()\n");
     list_test();
+
+    fprintf(stderr, "Running rbuffer_test()\n");
     rbuffer_test();
+
     fprintf(stderr, "Great success, run all unit tests without any errors!\n");
 }

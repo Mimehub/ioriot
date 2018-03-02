@@ -83,21 +83,39 @@ void strunquote(char *str)
     }
 }
 
-void drop_root(const char *user)
+void set_limits_drop_root(const char *user)
 {
     if (getuid() == 0) {
-        Put("Dropping root privileges to user %s", user);
+        struct rlimit rl;
+        rl.rlim_cur = rl.rlim_max = SET_RLIMIT_NOFILE;
+        if (0 != setrlimit(RLIMIT_NOFILE, &rl)) {
+            Errno("Could not set RLIMIT_NOFILE to '%lld'!",
+                    (long long) SET_RLIMIT_NOFILE)
+        }
+        rl.rlim_cur = rl.rlim_max = SET_RLIMIT_NPROC;
+        if (0 != setrlimit(RLIMIT_NPROC, &rl)) {
+            Errno("Could not set RLIMIT_NPROC to '%lld'!",
+                    (long long) SET_RLIMIT_NPROC)
+        }
 
+        Put("Dropping root privileges to user '%s'", user);
         struct passwd *pw = getpwnam(user);
 
         /* process is running as root, drop privileges */
         if (setgid(pw->pw_gid) != 0) {
-            Errno("setgid: Unable to drop group privileges!");
+            Errno("Unable to drop group privileges!");
         }
         if (setuid(pw->pw_uid) != 0) {
-            Errno("setuid: Unable to drop user privileges!");
+            Errno("Unable to drop user privileges!");
         }
     }
+
+    /*
+    getrlimit(RLIMIT_NOFILE, &rl);
+    Put("Max open files: '%lld'", (long long) rl.rlim_cur);
+    getrlimit(RLIMIT_NPROC, &rl);
+    Put("Max open processes : '%lld'", (long long) rl.rlim_cur);
+    */
 }
 
 void get_loadavg_s(char *readbuf)
@@ -148,5 +166,21 @@ void start_pthread(pthread_t *thread, void*(*cb)(void*), void *data)
     default:
         Error("Unknown error while creating pthread (%d)", rc);
         break;
+    }
+}
+
+void utils_test(void)
+{
+    if (getuid() == 0) {
+        set_limits_drop_root("nobody");
+        struct rlimit rl;
+
+        getrlimit(RLIMIT_NOFILE, &rl);
+        assert(rl.rlim_cur == SET_RLIMIT_NOFILE);
+        assert(rl.rlim_max == SET_RLIMIT_NOFILE);
+
+        getrlimit(RLIMIT_NPROC, &rl);
+        assert(rl.rlim_cur == SET_RLIMIT_NPROC);
+        assert(rl.rlim_max == SET_RLIMIT_NPROC);
     }
 }

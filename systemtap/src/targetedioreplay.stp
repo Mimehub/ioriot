@@ -588,9 +588,4 @@ probe timer.s(3600) {
     exit();
 }
 
-# Stop probing after 1h (for safety)
-probe timer.s(13) {
-    exit();
-}
-
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
