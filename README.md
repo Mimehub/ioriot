@@ -10,7 +10,7 @@ I/O Replay is operated in 5 steps:
 2. Initialize: Copy the log to a load test machine and initialize the load test environment.
 3. Replay: Drop all OS caches and replay all I/O operations.
 4. Analyze: Look at the OS and hardware stats (throughput, I/O ops, load average) from the run phase and draw conclusions. The aim is to identify possible I/O bottlenecks.
-5. Repeat: Repeat 2-4 times but adjust OS and hardware settings in order to improve I/O performance.
+5. Repeat: Repeat steps 2-4 multiple times but adjust OS and hardware settings in order to improve I/O performance.
 
 Examples of OS and hardware settings and adjustments:
 
