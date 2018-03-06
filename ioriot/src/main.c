@@ -100,7 +100,7 @@ static void _print_help(void)
     Put("\t-S STATSFILE  Write a stats file at the end of a test");
     Put("\t-T            Trash data directories");
     Put("\t-P            Purge all trash directories of all tests)");
-    Put("\t-V            Print I/O replay program version");
+    Put("\t-V            Print I/O Riot program version");
     Put("\t-w WD_BASE    The working directory's base path");
     Put("\t              (default: /usr/local/ioriot)");
     Put("\t-x PID        To specify a process ID (in conjunction with -c)");
