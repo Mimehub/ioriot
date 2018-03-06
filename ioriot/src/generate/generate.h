@@ -79,7 +79,7 @@ status_e generate_run(options_s *opts);
  *
  * This function writes a list of all pre-required
  * paths to the .replay file. That then can be used
- * by ioreplay to initialise the test enironment.
+ * by ioriot to initialise the test enironment.
  *
  * @param data A pointer to the vsize timestamp object
  */

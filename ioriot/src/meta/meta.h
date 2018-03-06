@@ -21,7 +21,7 @@
  * @brief The meta information definition
  *
  * This is used to write or read meta information to/from the header
- * of the .replay file. This information then is used by ioreplay
+ * of the .replay file. This information then is used by ioriot
  * in other steps. E.g. reading the amount of used file descriptors
  * from the meta header in order to allocate data structures of the
  * correct sizes before running the test!

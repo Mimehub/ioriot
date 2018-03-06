@@ -15,7 +15,7 @@
 # limitations under the License.
 
 # This script is used to capture I/O on a Linux based system in order to replay
-# the same I/O via the ioreplay command line utility.
+# the same I/O via the ioriot command line utility.
 #
 # The tool will generate one line per captured I/O syscall to a .capture log
 # file.
@@ -72,7 +72,7 @@ function absolute_path (path) {
 }
 
 probe syscall.open.return, syscall.openat.return {
-    if (execname() == "java") {
+    if (execname() != "stapio") {
         pathname = user_string(@entry($filename))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,f=%d;:,m=%d;:,\n",
                 gettimeofday_ms(),
@@ -87,7 +87,7 @@ probe syscall.open.return, syscall.openat.return {
 }
 
 probe syscall.lseek.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,O=%d;:,W=%d;:,b=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -101,7 +101,7 @@ probe syscall.lseek.return {
 }
 
 probe syscall.fcntl.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,F=%d;:,G=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -115,7 +115,7 @@ probe syscall.fcntl.return {
 }
 
 probe syscall.creat.return {
-    if (execname() == "java") {
+    if (execname() != "stapio") {
         pathname = user_string(@entry($pathname))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,m=%d;:,\n",
                 gettimeofday_ms(),
@@ -129,7 +129,7 @@ probe syscall.creat.return {
 }
 
 probe syscall.write.return, syscall.writev.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,b=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -141,7 +141,7 @@ probe syscall.write.return, syscall.writev.return {
 }
 
 probe syscall.unlink.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         pathname = user_string(@entry($pathname))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
                 gettimeofday_ms(),
@@ -154,7 +154,7 @@ probe syscall.unlink.return {
 }
 
 probe syscall.unlinkat.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         pathname = user_string(@entry($pathname))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,f=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
@@ -169,7 +169,7 @@ probe syscall.unlinkat.return {
 }
 
 probe syscall.rename.return, syscall.renameat.return, syscall.renameat2.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         oldname = user_string(@entry($oldname))
         newname = user_string(@entry($newname))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,P=%s;:,s=%d;:,\n",
@@ -184,7 +184,7 @@ probe syscall.rename.return, syscall.renameat.return, syscall.renameat2.return {
 }
 
 probe syscall.read.return, syscall.readv.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,b=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -196,7 +196,7 @@ probe syscall.read.return, syscall.readv.return {
 }
 
 probe syscall.readahead.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,b=%ld;:,O=%ld;:,c=%ld\n",
                 gettimeofday_ms(),
                 pid(),
@@ -210,7 +210,7 @@ probe syscall.readahead.return {
 }
 
 probe syscall.readdir.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -222,7 +222,7 @@ probe syscall.readdir.return {
 }
 
 probe syscall.readlink.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         pathname = user_string(@entry($path))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
                 gettimeofday_ms(),
@@ -235,7 +235,7 @@ probe syscall.readlink.return {
 }
 
 probe syscall.readlinkat.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         pathname = user_string(@entry($pathname))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
                 gettimeofday_ms(),
@@ -248,7 +248,7 @@ probe syscall.readlinkat.return {
 }
 
 probe syscall.fdatasync.return, syscall.fsync.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -260,7 +260,7 @@ probe syscall.fdatasync.return, syscall.fsync.return {
 }
 
 probe syscall.sync_file_range.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,O=%ld;:,b=%ld;:,s=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -274,7 +274,7 @@ probe syscall.sync_file_range.return {
 }
 
 probe syscall.sync.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,s=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -285,7 +285,7 @@ probe syscall.sync.return {
 }
 
 probe syscall.syncfs.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -297,7 +297,7 @@ probe syscall.syncfs.return {
 }
 
 probe syscall.close.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -309,7 +309,7 @@ probe syscall.close.return {
 }
 
 probe syscall.getdents.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,c=%d;:,b=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -322,7 +322,7 @@ probe syscall.getdents.return {
 }
 
 probe syscall.mkdir.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         pathname = user_string(@entry($pathname))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,m=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
@@ -336,7 +336,7 @@ probe syscall.mkdir.return {
 }
 
 probe syscall.rmdir.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         pathname = user_string(@entry($pathname))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
                 gettimeofday_ms(),
@@ -349,7 +349,7 @@ probe syscall.rmdir.return {
 }
 
 probe syscall.mkdirat.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         pathname = user_string(@entry($pathname))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,m=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
@@ -364,7 +364,7 @@ probe syscall.mkdirat.return {
 }
 
 probe syscall.stat.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         pathname = user_string(@entry($filename))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
                 gettimeofday_ms(),
@@ -377,7 +377,7 @@ probe syscall.stat.return {
 }
 
 probe syscall.statfs.return, syscall.statfs64.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         pathname = user_string(@entry($pathname))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
                 gettimeofday_ms(),
@@ -390,7 +390,7 @@ probe syscall.statfs.return, syscall.statfs64.return {
 }
 
 probe syscall.fstatfs.return, syscall.fstatfs64.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -402,7 +402,7 @@ probe syscall.fstatfs.return, syscall.fstatfs64.return {
 }
 
 probe syscall.lstat.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         pathname = user_string(@entry($filename))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
                 gettimeofday_ms(),
@@ -415,7 +415,7 @@ probe syscall.lstat.return {
 }
 
 probe syscall.fstat.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -427,7 +427,7 @@ probe syscall.fstat.return {
 }
 
 probe syscall.fstatat.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         pathname = user_string(@entry($filename))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%ld;:,p=%s;:,f=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
@@ -442,7 +442,7 @@ probe syscall.fstatat.return {
 }
 
 probe syscall.chmod.return, syscall.fchmodat.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         pathname = user_string(@entry($filename))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,m=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
@@ -456,7 +456,7 @@ probe syscall.chmod.return, syscall.fchmodat.return {
 }
 
 probe syscall.fchmod.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,m=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -470,7 +470,7 @@ probe syscall.fchmod.return {
 
 probe syscall.chown.return, syscall.chown16.return,
       syscall.lchown.return, syscall.lchown16.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         pathname = user_string(@entry($filename))
         printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,O=%d;:,G=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
@@ -485,7 +485,7 @@ probe syscall.chown.return, syscall.chown16.return,
 }
 
 probe syscall.fchown.return, syscall.fchown16.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%ld;:,O=%d;:,G=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -500,7 +500,7 @@ probe syscall.fchown.return, syscall.fchown16.return {
 
 probe syscall.fchownat.return {
     pathname = user_string(@entry($filename))
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,O=%d;:,G=%d;:,f=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -515,7 +515,7 @@ probe syscall.fchownat.return {
 }
 
 probe syscall.mmap2.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,a=%ld;:,b=%ld;:,m=%d;:,f=%d;:,d=%d;:,O=%ld;:,A=%ld;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -532,7 +532,7 @@ probe syscall.mmap2.return {
 }
 
 probe syscall.mremap.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,a=%ld;:,A=%ld;:,b=%ld;:,f=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -547,7 +547,7 @@ probe syscall.mremap.return {
 }
 
 probe syscall.munmap.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,a=%ld;:,b=%ld;:,s=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -560,7 +560,7 @@ probe syscall.munmap.return {
 }
 
 probe syscall.msync.return {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,a=%ld;:,b=%ld;:,f=%d;:,s=%d;:,\n",
                 gettimeofday_ms(),
                 pid(),
@@ -574,7 +574,7 @@ probe syscall.msync.return {
 }
 
 probe syscall.exit_group {
-    if(execname() == "java") {
+    if(execname() != "stapio") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,\n",
                 gettimeofday_ms(),
                 pid(),

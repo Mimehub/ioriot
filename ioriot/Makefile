@@ -1,9 +1,9 @@
 #DEBUG=-g3 -ggdb3 -pg
-NAME=ioreplay
+NAME=ioriot
 LIBS=-pthread
 CFLAGS=-Wall -std=gnu99 -pedantic
 STATIC=#-static
-DESTDIR=/opt/ioreplay/bin
+DESTDIR=/opt/ioriot/bin
 SRCS=$(wildcard src/*.c src/*/*.c)
 HDRS=$(SRCS:.c=.h)
 OBJS=$(SRCS:.c=.o)
@@ -18,7 +18,7 @@ compile: $(OBJS)
 %.o: %.c %.h
 	$(CC) $(STATIC) $(DEBUG) $(LIBS) -c $(CFLAGS) $< -o $@
 clean:
-	rm -v ioreplay ./src/*.o ./src/*/*.o 2>/dev/null || exit 0
+	rm -v ioriot ./src/*.o ./src/*/*.o 2>/dev/null || exit 0
 install:
 	test ! -d $(DESTDIR) && mkdir -p $(DESTDIR) || exit 0
 	cp -v $(NAME) $(DESTDIR)

@@ -77,7 +77,7 @@ void init_parent_dir(vsize_s *v, const char *path);
  * Compares the virtual file size of the file in the vsize
  * object to the the offset in the virtual file descriptor.
  * In case the offset is higher we have a size deficit and
- * we need to mark it. That way ioreplay can ensure that
+ * we need to mark it. That way ioriot can ensure that
  * during init mode it will create a file with the correct
  * size prior of running the test!
  *

@@ -62,7 +62,7 @@ void gprocess_destroy(gprocess_s *gp);
 /**
  * @brief Creates a new virtual FD from a given real FD number
  *
- * In ioreplay we map the real file descriptor (the fd number protocolled in
+ * In ioriot we map the real file descriptor (the fd number protocolled in
  * the.capture file) to a virtual file descriptor (the fd numner written to the
  * .replay file). The purpose is to increase concurrency of the I/O during
  * replay. Normally, a process would reuse the same file descriptor number

@@ -16,7 +16,7 @@
  * @file main.c
  * @author Paul Buetow
  *
- * @brief The entry point of the I/O Replay program.
+ * @brief The entry point of the I/O Riot program.
  */
 
 #include <signal.h>
@@ -55,7 +55,7 @@ static void _arch_check_atomic(void)
  */
 static void _print_version(void)
 {
-    Put("This is I/O Replay %s - %s", IOREPLAY_VERSION, IOREPLAY_COPYRIGHT);
+    Put("This is I/O Riot %s - %s", IORIOT_VERSION, IORIOT_COPYRIGHT);
 }
 
 /**
@@ -66,15 +66,15 @@ static void _print_synopsis(void)
     _print_version();
 
     Put("Synopsis:");
-    Put("\tioreplay -c io.capture [-x PID] [-m MODULE]");
-    Put("\tioreplay -c io.capture -r io.replay [-n str] [-u str] [-w str]");
-    Put("\tioreplay -i io.replay");
-    Put("\tioreplay -r io.replay [-p #] [-t #] [-D] [-s #]");
-    Put("\tioreplay -R io.replay [-p #] [-t #] [-D] [-s #]");
-    Put("\tioreplay -d");
-    Put("\tioreplay -P");
-    Put("\tioreplay -T [-n NAME]");
-    Put("\tioreplay -V");
+    Put("\tioriot -c io.capture [-x PID] [-m MODULE]");
+    Put("\tioriot -c io.capture -r io.replay [-n str] [-u str] [-w str]");
+    Put("\tioriot -i io.replay");
+    Put("\tioriot -r io.replay [-p #] [-t #] [-D] [-s #]");
+    Put("\tioriot -R io.replay [-p #] [-t #] [-D] [-s #]");
+    Put("\tioriot -d");
+    Put("\tioriot -P");
+    Put("\tioriot -T [-n NAME]");
+    Put("\tioriot -V");
 }
 
 /**
@@ -85,7 +85,7 @@ static void _print_help(void)
     _print_synopsis();
 
     Put("Help:");
-    Put("\t-d            Drop all Linux/FS caches and exit ioreplay");
+    Put("\t-d            Drop all Linux/FS caches and exit ioriot");
     Put("\t-D            Don't drop all caches (in conjunction with -r/-R):");
     Put("\t-s SPEED      The speed factor (default: 0 [as fast as possible])");
     Put("\t-h            Print this help");
@@ -102,18 +102,18 @@ static void _print_help(void)
     Put("\t-P            Purge all trash directories of all tests)");
     Put("\t-V            Print I/O replay program version");
     Put("\t-w WD_BASE    The working directory's base path");
-    Put("\t              (default: /usr/local/ioreplay)");
+    Put("\t              (default: /usr/local/ioriot)");
     Put("\t-x PID        To specify a process ID (in conjunction with -c)");
     Put("\t-m MODULE     To specify a module (in conjunction with -c)");
     Put("\nExample (run these commands one after another):");
-    Put("\t 1.) sudo ioreplay -c io.capture");
-    Put("\t 2.) sudo ioreplay -r io.replay -c io.capture -u paul -n test1");
-    Put("\t 3.) sudo ioreplay -i io.replay");
-    Put("\t 4.) sudo ioreplay -r io.replay -S");
+    Put("\t 1.) sudo ioriot -c io.capture");
+    Put("\t 2.) sudo ioriot -r io.replay -c io.capture -u paul -n test1");
+    Put("\t 3.) sudo ioriot -i io.replay");
+    Put("\t 4.) sudo ioriot -r io.replay -S");
 }
 
 /**
- * @brief I/O Replay's entry point
+ * @brief I/O Riot's entry point
  *
  * Not much more to document here though!
  * @return The exit code

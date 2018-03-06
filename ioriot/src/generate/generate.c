@@ -165,7 +165,7 @@ status_e generate_run(options_s *opts)
     meta_write_start(meta);
 
     // The meta header is being written to the first line of the .replay
-    // file and used by ioreplay to do various things (e.g. initializing
+    // file and used by ioriot to do various things (e.g. initializing
     // the test correctly, creating the internal data structures with the
     // correct sizes etc.
 

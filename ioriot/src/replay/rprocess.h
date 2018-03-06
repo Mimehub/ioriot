@@ -30,7 +30,7 @@ typedef struct rprocess_s_ {
     int rworker_num; /**< The worker number of the responsible worker */
     int pid; /**< The virtual process ID */
     unsigned long lineno; /**< Holding the current .replay line number */
-    bool initm; /**< Indicates whether ioreplay is in init mode or not */
+    bool initm; /**< Indicates whether ioriot is in init mode or not */
     amap_s *fds_map; /**< Holding all file descriptors */
 } rprocess_s;
 

@@ -57,8 +57,8 @@ HMAP_H	./src/datas/hmap.h	2;"	d
 Has	./src/macros.h	17;"	d
 Hasnt	./src/macros.h	18;"	d
 INIT_H	./src/init/init.h	2;"	d
-IOREPLAY_COPYRIGHT	./src/defaults.h	19;"	d
-IOREPLAY_VERSION	./src/defaults.h	17;"	d
+IORIOT_COPYRIGHT	./src/defaults.h	19;"	d
+IORIOT_VERSION	./src/defaults.h	17;"	d
 ITASK_H	./src/init/itask.h	2;"	d
 ITHREAD_H	./src/init/ithread.h	2;"	d
 LCHOWN	./src/opcodes.h	/^    LCHOWN,$/;"	e	enum:__anon1
@@ -225,7 +225,7 @@ debug	./src/vfd.h	/^    int debug; \/**< Used for debugging purposes only *\/$/;
 dirfd	./src/vfd.h	/^    DIR *dirfd; \/**< The real dirfd *\/$/;"	m	struct:vfd_s_
 dirname_r	./src/utils/futils.c	/^char* dirname_r(char *path)$/;"	f
 dirs_created	./src/init/itask.h	/^    long dirs_created;$/;"	m	struct:itask_s_
-drop_caches	./src/options.h	/^    bool drop_caches; \/**< True if  ioreplay should drop all Linux caches *\/$/;"	m	struct:options_s_
+drop_caches	./src/options.h	/^    bool drop_caches; \/**< True if  ioriot should drop all Linux caches *\/$/;"	m	struct:options_s_
 drop_caches	./src/utils/futils.c	/^void drop_caches(void)$/;"	f
 drop_root	./src/utils/utils.c	/^void drop_root(const char *user)$/;"	f
 ensure_dir_empty	./src/utils/futils.c	/^void ensure_dir_empty(const char *path)$/;"	f
@@ -353,7 +353,7 @@ id	./src/generate/vsize.h	/^    unsigned long id; \/**< The vsize id *\/$/;"	m	s
 ignore_count	./src/mounts.h	/^    int ignore_count; \/**< The amount of ignored mount points *\/$/;"	m	struct:mounts_s_
 ignore_mps	./src/mounts.h	/^    char *ignore_mps[MAX_MOUNTPOINTS]; \/**< The ignored mp paths *\/$/;"	m	struct:mounts_s_
 init	./src/init/ithread.h	/^    init_s *init; \/**< The responsible init object *\/$/;"	m	struct:ithread_s_
-init	./src/options.h	/^    bool init; \/**< If set ioreplay will initialise the environment *\/$/;"	m	struct:options_s_
+init	./src/options.h	/^    bool init; \/**< If set ioriot will initialise the environment *\/$/;"	m	struct:options_s_
 init_destroy	./src/init/init.c	/^void init_destroy(init_s *i)$/;"	f
 init_extract_header	./src/init/init.c	/^void init_extract_header(init_s *i, off_t *init_offset)$/;"	f
 init_new	./src/init/init.c	/^init_s *init_new(options_s *opts)$/;"	f
@@ -361,7 +361,7 @@ init_parent_dir	./src/generate/vsize.c	/^void init_parent_dir(vsize_s *v, const 
 init_run	./src/init/init.c	/^status_e init_run(options_s *opts)$/;"	f
 init_s	./src/init/init.h	/^} init_s;$/;"	t	typeref:struct:init_s_
 init_s_	./src/init/init.h	/^typedef struct init_s_ {$/;"	s
-initm	./src/replay/rprocess.h	/^    bool initm; \/**< Indicates whether ioreplay is in init mode or not *\/$/;"	m	struct:rprocess_s_
+initm	./src/replay/rprocess.h	/^    bool initm; \/**< Indicates whether ioriot is in init mode or not *\/$/;"	m	struct:rprocess_s_
 inserted	./src/generate/vsize.h	/^    bool inserted; \/**< For debugging purposes only *\/$/;"	m	struct:vsize_s_
 is_dir	./src/generate/vsize.h	/^    bool is_dir; \/**< True if this file\/dir is a directory *\/$/;"	m	struct:vsize_s_
 is_dir	./src/init/itask.h	/^    bool is_dir;$/;"	m	struct:itask_s_
@@ -453,7 +453,7 @@ mounts_trash	./src/mounts.c	/^void mounts_trash(mounts_s *m)$/;"	f
 mps	./src/generate/generate.h	/^    mounts_s *mps; \/**< The mounts object *\/$/;"	m	struct:generate_s_
 mps	./src/mounts.h	/^    char *mps[MAX_MOUNTPOINTS]; \/**< The mp paths *\/$/;"	m	struct:mounts_s_
 name	./src/generate/generate.h	/^    char *name; \/**< The name of the test specified by the user *\/$/;"	m	struct:generate_s_
-name	./src/options.h	/^    char *name; \/**< The name of the test (found in .ioreplay\/name sub-dirs) *\/$/;"	m	struct:options_s_
+name	./src/options.h	/^    char *name; \/**< The name of the test (found in .ioriot\/name sub-dirs) *\/$/;"	m	struct:options_s_
 next	./src/datas/list.h	/^    struct list_elem_s_ *next; \/**< The next element *\/$/;"	m	struct:list_elem_s_	typeref:struct:list_elem_s_::list_elem_s_
 next	./src/datas/stack.h	/^    struct stack_elem_s_ *next; \/**< The next element *\/$/;"	m	struct:stack_elem_s_	typeref:struct:stack_elem_s_::stack_elem_s_
 notnull	./src/utils/utils.c	/^void* notnull(void *p, char *file, int line, int count)$/;"	f
@@ -497,7 +497,7 @@ pthread	./src/generate/gparser.h	/^    pthread_t pthread; \/**< The posix thread
 pthread	./src/generate/gwriter.h	/^    pthread_t pthread; \/**< The posix thread *\/$/;"	m	struct:gwriter_s_
 pthread	./src/init/ithread.h	/^    pthread_t pthread; \/**< We run the init tasks in concurrent pthreads *\/$/;"	m	struct:ithread_s_
 pthread	./src/replay/rthread.h	/^    pthread_t pthread; \/**< We run the tasks in concurrent pthreads *\/$/;"	m	struct:rthread_s_
-purge	./src/options.h	/^    bool purge; \/**< If set ioreplay will purge the environment *\/$/;"	m	struct:options_s_
+purge	./src/options.h	/^    bool purge; \/**< If set ioriot will purge the environment *\/$/;"	m	struct:options_s_
 queue	./src/generate/gparser.h	/^    rbuffer_s *queue; \/**< A queue of task objects *\/$/;"	m	struct:gparser_s_
 queue	./src/generate/gwriter.h	/^    rbuffer_s *queue; \/**< A queue of task objects *\/$/;"	m	struct:gwriter_s_
 queue	./src/init/ithread.h	/^    rbuffer_s *queue; \/**< The thread's task queue *\/$/;"	m	struct:ithread_s_
@@ -513,7 +513,7 @@ rbuffer_test	./src/datas/rbuffer.c	/^void rbuffer_test(void)$/;"	f
 read_buf	./src/meta/meta.h	/^    char* read_buf; \/**< Pointer to a read buffer *\/$/;"	m	struct:meta_s_
 read_pos	./src/datas/rbuffer.h	/^    sig_atomic_t read_pos;$/;"	m	struct:rbuffer_s_
 renamed	./src/generate/vsize.h	/^    bool renamed; \/**< True if file\/dir has been renamed *\/$/;"	m	struct:vsize_s_
-replay	./src/options.h	/^    bool replay; \/**< If set ioreplay will run\/replay the test *\/$/;"	m	struct:options_s_
+replay	./src/options.h	/^    bool replay; \/**< If set ioriot will run\/replay the test *\/$/;"	m	struct:options_s_
 replay_extract_header	./src/replay/replay.c	/^void replay_extract_header(options_s *opts, FILE *replay_fd, long *num_vsizes,$/;"	f
 replay_fd	./src/generate/generate.h	/^    FILE *replay_fd; \/**< The fd of the .replay file *\/$/;"	m	struct:generate_s_
 replay_fd	./src/init/init.h	/^    FILE *replay_fd;$/;"	m	struct:init_s_
@@ -521,7 +521,7 @@ replay_fd	./src/meta/meta.h	/^    FILE* replay_fd; \/**< The FS of the .replay f
 replay_file	./src/options.h	/^    char *replay_file; \/**< The name of the .replay file *\/$/;"	m	struct:options_s_
 replay_run	./src/replay/replay.c	/^status_e replay_run(options_s *opts)$/;"	f
 required	./src/generate/vsize.h	/^    bool required; \/**< True if init mode will create this file\/dir *\/$/;"	m	struct:vsize_s_
-ret	./src/generate/gtask.h	/^    int ret; \/**< ioreplay process status, SUCCESS if everything is alright *\/$/;"	m	struct:gtask_s_
+ret	./src/generate/gtask.h	/^    int ret; \/**< ioriot process status, SUCCESS if everything is alright *\/$/;"	m	struct:gtask_s_
 reuse_queue	./src/generate/generate.h	/^    rbuffer_s *reuse_queue; \/**< A task buffer, for reusing these *\/$/;"	m	struct:generate_s_
 reuse_queue	./src/init/init.h	/^    rbuffer_s *reuse_queue;$/;"	m	struct:init_s_
 reuse_queue_mutex	./src/init/init.h	/^    pthread_mutex_t reuse_queue_mutex;$/;"	m	struct:init_s_
@@ -617,7 +617,7 @@ tid	./src/generate/gtask.h	/^    long tid; \/**< The thread ID *\/$/;"	m	struct:
 tid	./src/replay/rthread.h	/^    long tid; \/**< The virtual thread id *\/$/;"	m	struct:rthread_s_
 toks	./src/replay/rtask.h	/^    char *toks[MAX_TOKENS+1]; \/**< The tokens parsed from the .replay line *\/$/;"	m	struct:rtask_s_
 top	./src/datas/stack.h	/^    stack_elem_s *top; \/**< The top element of the stack, NULL if empty *\/$/;"	m	struct:stack_s_
-trash	./src/options.h	/^    bool trash; \/**< If set ioreplay will trash the environment *\/$/;"	m	struct:options_s_
+trash	./src/options.h	/^    bool trash; \/**< If set ioriot will trash the environment *\/$/;"	m	struct:options_s_
 unsure	./src/generate/vsize.h	/^    bool unsure; \/**< True if the file type is not fully clear *\/$/;"	m	struct:vsize_s_
 updates	./src/generate/vsize.h	/^    long updates; \/**< Amount of times this vsize has been updated *\/$/;"	m	struct:vsize_s_
 user	./src/options.h	/^    char *user; \/**< The user name to run the test as *\/$/;"	m	struct:options_s_

@@ -41,7 +41,7 @@ rworker_s* rworker_new(const int rworker_num, amap_s *fds_map,
 
 #ifdef THREAD_DEBUG
     char *rworker_log = Calloc(1024, char);
-    snprintf(rworker_log, 1023, "/tmp/ioreplay/_worker%d.debuglog",
+    snprintf(rworker_log, 1023, "/tmp/ioriot/_worker%d.debuglog",
              rworker_num);
 
     w->rworker_fd = Fopen(rworker_log, "a");

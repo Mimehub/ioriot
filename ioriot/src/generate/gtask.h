@@ -46,7 +46,7 @@ typedef struct gtask_s_ {
     int fd; /**< File descriptor number */
     int flags; /**< File open flags */
     int mode; /**< File open mode */
-    int ret; /**< ioreplay process status, SUCCESS if everything is alright */
+    int ret; /**< ioriot process status, SUCCESS if everything is alright */
     int status; /**< Operation/syscall return status */
     long address2; /**< Another address (used by mmap related syscalls) */
     long address; /**< An address (used by mmap related syscalls) */

@@ -104,7 +104,7 @@ void gparser_extract(gparser_s *p, gtask_s *t)
             Cleanup(ERROR);
         }
 
-        // We are inserting ".ioreplay/NAME" to the paths. This enables us to
+        // We are inserting ".ioriot/NAME" to the paths. This enables us to
         // run multiple tests simoultaneously.
 
         if (t->path) {

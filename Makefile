@@ -1,19 +1,19 @@
-DESTDIR=/opt/ioreplay
+DESTDIR=/opt/ioriot
 all:
 	$(MAKE) -C systemtap
-	$(MAKE) -C ioreplay
+	$(MAKE) -C ioriot
 install:
 	$(MAKE) -C systemtap install
-	$(MAKE) -C ioreplay install
+	$(MAKE) -C ioriot install
 uninstall:
 	test ! -z $(DESTDIR) && test -d $(DESTDIR) && rm -Rfv $(DESTDIR) || exit 0
 deinstall: uninstall
 clean:
-	$(MAKE) -C ioreplay clean
+	$(MAKE) -C ioriot clean
 	$(MAKE) -C systemtap clean
 astyle:
-	$(MAKE) -C ioreplay astyle
+	$(MAKE) -C ioriot astyle
 loc:
-	wc -l ./systemtap/src/*.stp ./ioreplay/src/*.{h,c} ./ioreplay/src/*/*.{h,c} | tail -n 1
+	wc -l ./systemtap/src/*.stp ./ioriot/src/*.{h,c} ./ioriot/src/*/*.{h,c} | tail -n 1
 doxygen:
 	doxygen ./docs/doxygen.conf

@@ -27,10 +27,10 @@
 #define MAX_LINE_LEN 1024*8
 /** Controls how many tasks can be queued and buffered per worker thread */
 #define TASK_BUFFER_PER_THREAD 512
-/** Version of I/O Replay */
-#define IOREPLAY_VERSION "0.3-develop"
+/** Version of I/O Riot */
+#define IORIOT_VERSION "0.3-develop"
 /** Copyright information */
-#define IOREPLAY_COPYRIGHT "Mimecast 2017, 2018 (c)"
+#define IORIOT_COPYRIGHT "Mimecast 2017, 2018 (c)"
 /** Max open files resource user limit */
 #define SET_RLIMIT_NOFILE 369216
 /** Max processes resource user limit */

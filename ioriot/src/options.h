@@ -27,15 +27,15 @@ typedef struct options_s_ {
     char *stats_file; /**< The name of the .stats file */
     bool write_stats_file; /**< Write a stats file at the end of the test */
     char *user; /**< The user name to run the test as */
-    char *name; /**< The name of the test (found in .ioreplay/name sub-dirs) */
+    char *name; /**< The name of the test (found in .ioriot/name sub-dirs) */
     char *wd_base; /**< The working directory base */
     int num_workers; /**< The amount of worker processes */
     int num_threads_per_worker; /**< Max threads per worker processes */
-    bool init; /**< If set ioreplay will initialise the environment */
-    bool replay; /**< If set ioreplay will run/replay the test */
-    bool purge; /**< If set ioreplay will purge the environment */
-    bool trash; /**< If set ioreplay will trash the environment */
-    bool drop_caches; /**< True if  ioreplay should drop all Linux caches */
+    bool init; /**< If set ioriot will initialise the environment */
+    bool replay; /**< If set ioriot will run/replay the test */
+    bool purge; /**< If set ioriot will purge the environment */
+    bool trash; /**< If set ioriot will trash the environment */
+    bool drop_caches; /**< True if  ioriot should drop all Linux caches */
     double speed_factor; /**< Specifies how fast the test is replayed */
     int pid; /**< Specifies a process id to capture */
     char *module; /**< Specifies the kernel module for capturing */

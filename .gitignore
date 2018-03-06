@@ -2,5 +2,5 @@
 *.o
 docs/html/
 docs/latex/
-ioreplay/ioreplay
+ioriot/ioriot
 systemtap/downloads/

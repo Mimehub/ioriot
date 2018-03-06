@@ -35,7 +35,7 @@ status_e capture_run(options_s *opts)
 
     Put("Release of currently running Kernel: %s", uts.release);
     char modules_dir[128];
-    sprintf(modules_dir, "/opt/ioreplay/systemtap/%s", uts.release);
+    sprintf(modules_dir, "/opt/ioriot/systemtap/%s", uts.release);
     Put("Changing directory to module path: %s/", modules_dir);
 
     if (0 != chdir(modules_dir)) {
@@ -77,7 +77,7 @@ status_e capture_run(options_s *opts)
     Out("NOTICE: It is good practise first to stop all processes, then to ");
     Out("start capturing, and then to start all processes again. The reason ");
     Out("is that processes may have already open file handles. In that case ");
-    Out("I/O Replay would be unable to replay these! This may be improved "); 
+    Out("I/O Riot would be unable to replay these! This may be improved "); 
     Put("in a future release!");
     Put("To abort capturing now send Ctrl+C, otherwise wait 1h");
     Put("Capturing I/O via: '%s'", staprun_command);

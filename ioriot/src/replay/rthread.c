@@ -31,10 +31,10 @@ static void _rthread_init_log(rthread_s *t)
 {
     rworker_s *w = t->worker;
     char *rthread_log = Calloc(1024, char);
-    snprintf(rthread_log, 1023, "/tmp/ioreplay/worker%d.thread%ld.debuglog",
+    snprintf(rthread_log, 1023, "/tmp/ioriot/worker%d.thread%ld.debuglog",
              w->rworker_num, (long)pthread_self());
 
-    ensure_dir_exists("/tmp/ioreplay");
+    ensure_dir_exists("/tmp/ioriot");
     t->rthread_fd = Fopen(rthread_log, "a");
 
     free(rthread_log);

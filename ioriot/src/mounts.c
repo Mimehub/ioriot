@@ -16,7 +16,7 @@
 
 #include "utils/futils.h"
 
-#define _PATH_INSERT "/.ioreplay/"
+#define _PATH_INSERT "/.ioriot/"
 #define _PATH_INSERT_LEN 11 // strlen of _PATH_INSERT
 
 void mounts_read(mounts_s *m)
@@ -240,14 +240,14 @@ void mounts_init(mounts_s *m)
         char *mp = m->mps[i];
         char *path = NULL;
 
-        // Create .ioreplay/ directory on MP
+        // Create .ioriot/ directory on MP
         asprintf(&path, "%s/%s", mp, _PATH_INSERT);
         ensure_dir_exists(path);
         chown_path(m->opts->user, path);
         free(path);
         path = NULL;
 
-        // Create .ioreplay/NAME directory on MP
+        // Create .ioriot/NAME directory on MP
         asprintf(&path, "%s/%s/%s", mp, _PATH_INSERT, opts->name);
         ensure_dir_exists(path);
         chown_path(m->opts->user, path);
@@ -339,7 +339,7 @@ bool mounts_transform_path(mounts_s *m, const char *name,
     }
 
     // So the path is on a valid mount point! Now we need to insert
-    // .ioreplay/NAME to each mount point, e.g. /usr/local/.ioreplay/NAME/...
+    // .ioriot/NAME to each mount point, e.g. /usr/local/.ioriot/NAME/...
 
     // Iterate backwards through all mount points.
     for (int i = m->count-1; i >= 0; --i) {
@@ -348,7 +348,7 @@ bool mounts_transform_path(mounts_s *m, const char *name,
 
         if (strncmp(path, mountpoint, mp_len) == 0) {
             // Found a path to replace
-            // Now insert .ioreplay/NAME/ into the file path.
+            // Now insert .ioriot/NAME/ into the file path.
             *path_r = Calloc(strlen(path) + strlen(name)+1
                              + _PATH_INSERT_LEN+1, char);
 

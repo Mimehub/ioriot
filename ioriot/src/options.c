@@ -21,7 +21,7 @@ options_s *options_new()
     o->capture_file = NULL;
     o->replay_file = NULL;
     o->stats_file = NULL;
-    o->wd_base = "/usr/local/ioreplay";
+    o->wd_base = "/usr/local/ioriot";
     o->num_workers = 4;
     o->num_threads_per_worker = 128;
     o->user = "mcuser";
@@ -33,7 +33,7 @@ options_s *options_new()
     o->purge = false;
     o->trash = false;
     o->pid = -1;
-    o->module = "ioreplay.ko";
+    o->module = "ioriot.ko";
 
     return o;
 }

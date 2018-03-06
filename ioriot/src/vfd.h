@@ -21,7 +21,7 @@
 /**
  * @brief The virtual file descriptor definition
  *
- * A virtual file descriptor represents a file descriptor from ioreplay's
+ * A virtual file descriptor represents a file descriptor from ioriot's
  * point of view and is being used in various ways to simulate the real I/O
  * protocolled to the .capture/.replay files.
  *

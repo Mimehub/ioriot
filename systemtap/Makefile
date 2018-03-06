@@ -1,15 +1,15 @@
 KERNEL ?= $(shell uname -r)
 PROCESSOR ?= $(shell uname -p)
-DESTDIR ?= /opt/ioreplay/systemtap/$(KERNEL)
+DESTDIR ?= /opt/ioriot/systemtap/$(KERNEL)
 UPDATEURI = http://debuginfo.centos.org/7/$(PROCESSOR)
 DOWNLOADIR ?= ./downloads
 all: prepare compile
 prepare:
-	sed 's/execname() != "stapio"/pid() == target()/' ./src/ioreplay.stp > ./src/targetedioreplay.stp
-	sed 's/execname() != "stapio"/execname() == "java"/' ./src/ioreplay.stp > ./src/javaioreplay.stp
+	sed 's/execname() != "stapio"/pid() == target()/' ./src/ioriot.stp > ./src/targetedioriot.stp
+	sed 's/execname() != "stapio"/execname() == "java"/' ./src/ioriot.stp > ./src/javaioriot.stp
 compile:
 	@echo Crosscompiling for Kernel version $(KERNEL)
-	for stp in ioreplay javaioreplay targetedioreplay; do \
+	for stp in ioriot javaioriot targetedioriot; do \
 		stap -v ./src/$$stp.stp -p 4 -r $(KERNEL) -m $$stp \
 		-D MAXSTRINGLEN=255 -D MAXACTION=10000 -D MAXSKIPPED=10000\
 		-g --suppress-time-limits --suppress-handler-errors; \
@@ -18,14 +18,14 @@ testsystemtap:
 	stap -v -e 'probe vfs.read {printf("read performed\n"); exit()}'
 clean:
 	@echo Cleaning modules
-	test -f ioreplay.ko && rm -v ioreplay.ko || exit 0
-	test -f javaioreplay.ko && rm -v javaioreplay.ko || exit 0
-	test -f targetedioreplay.ko && rm -v targetedioreplay.ko || exit 0
+	test -f ioriot.ko && rm -v ioriot.ko || exit 0
+	test -f javaioriot.ko && rm -v javaioriot.ko || exit 0
+	test -f targetedioriot.ko && rm -v targetedioriot.ko || exit 0
 install:
 	test -d $(DESTDIR) || mkdir -p $(DESTDIR)
-	test -f ioreplay.ko && cp -v ioreplay.ko $(DESTDIR)/ || exit 0
-	test -f javaioreplay.ko && cp -v javaioreplay.ko $(DESTDIR)/ || exit 0
-	test -f targetedioreplay.ko && cp -v targetedioreplay.ko $(DESTDIR)/ || exit 0
+	test -f ioriot.ko && cp -v ioriot.ko $(DESTDIR)/ || exit 0
+	test -f javaioriot.ko && cp -v javaioriot.ko $(DESTDIR)/ || exit 0
+	test -f targetedioriot.ko && cp -v targetedioriot.ko $(DESTDIR)/ || exit 0
 uninstall:
 	test ! -z "$(DESTDIR)" && test -d $(DESTDIR)/ && find $(DESTDIR) -name \*.ko -delete || exit 0
 deinstall: uninstall

@@ -65,8 +65,8 @@ void mounts_destroy(mounts_s *m);
 /**
  * @brief moves all files within replay mounts to trash
  *
- * It moves all files of the .ioreplay/NAME directories to
- * .ioreplay/NAME.trashEPOCH directories for all available mount points.
+ * It moves all files of the .ioriot/NAME directories to
+ * .ioriot/NAME.trashEPOCH directories for all available mount points.
  * It does the same for the working dorectory of the current test.
  *
  * @param m The responsible mounts object
@@ -76,7 +76,7 @@ void mounts_trash(mounts_s *m);
 /**
  * @brief Deletes all files within replay mounts
  *
- * It deletes all files from the .ioreplay/ directories for all availabe
+ * It deletes all files from the .ioriot/ directories for all availabe
  * mount points. It also deletes the working directory of all tests. The
  * function forks one sub-process per mount point, so it is cleaning all drives
  * in parallel.
@@ -91,9 +91,9 @@ void mounts_trash(mounts_s *m);
 void mounts_purge(mounts_s *m);
 
 /**
- * @brief Ensures all mounts have a .ioreplay/NAME directory
+ * @brief Ensures all mounts have a .ioriot/NAME directory
  *
- * These directories are used by ioreplay to run the I/O replay tests in.
+ * These directories are used by ioriot to run the I/O replay tests in.
  * The function also ensures to have the correct user permissions for these
  * directories.
  *
@@ -111,7 +111,7 @@ void mounts_read(mounts_s *m);
 /**
  * @brief Determines whether a path should be ignored
  *
- * ioreplay replays I/O only on known mount points of known
+ * ioriot replays I/O only on known mount points of known
  * file system types. This function helps to determine whether
  * a path is on a valid mount point or not.
  *
@@ -122,9 +122,9 @@ void mounts_read(mounts_s *m);
 bool mounts_ignore_path(mounts_s *m, const char *path);
 
 /**
- * @brief Inserts ./ioreplay/NAME into a path
+ * @brief Inserts ./ioriot/NAME into a path
  *
- * This function inserts ./ioreplay/NAME into a given file path.
+ * This function inserts ./ioriot/NAME into a given file path.
  * The function also checks whether the path is on a supported replay
  * path or not. E.g. we want to ignore file systems such as devfs, sysfs,
  * procfs.. etc.
