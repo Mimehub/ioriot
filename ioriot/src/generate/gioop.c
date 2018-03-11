@@ -27,7 +27,7 @@ status_e gioop_run(gwriter_s *w, gtask_s *t)
     generate_s *g = w->generate;
 
     // Get the virtual process data object from the virtual PID space and store
-    // a pointer to it to t->gprocess
+    // a pointer to it at t->gprocess
     generate_gprocess_by_realpid(g, t);
 
     // One of the open syscalls may openes a file handle succesfully

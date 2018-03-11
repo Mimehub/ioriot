@@ -37,7 +37,7 @@ void btree_destroy2(btree_s* b)
     free(b);
 }
 
-int btree_insert(btree_s* b, int key, void *data)
+int btree_insert(btree_s* b, long key, void *data)
 {
     int ret = 0;
 
@@ -48,13 +48,13 @@ int btree_insert(btree_s* b, int key, void *data)
         ret = btreelem_insert_r(b->root, key, data);
     }
 
-    if (ret == 0)
+    if (ret == 1)
         b->size++;
 
     return ret;
 }
 
-void* btree_get(btree_s* b, int key)
+void* btree_get(btree_s* b, long key)
 {
     if (b->root == NULL)
         return NULL;
@@ -62,9 +62,29 @@ void* btree_get(btree_s* b, int key)
     return btreelem_get_r(b->root, key);
 }
 
+long btree_get_l(btree_s* b, long key)
+{
+    void *data = btree_get(b, key);
+    if (data)
+        return (long)data;
+    else
+        return -1;
+}
+
+void btree_ensure_range_l(btree_s* b, long from, long to)
+{
+    if (b->root == NULL) {
+        btree_insert(b, from, (void*)to);
+    } else {
+        if (1 == btreelem_ensure_range_lr(b->root, from, to))
+            b->size++;
+    }
+}
+
 void btree_print(btree_s* b)
 {
-    btreelem_print_r(b->root, 0);
+    Put("btree:%p size:%d", (void*)b, b->size);
+    btreelem_print_r(b->root, 1);
 }
 
 void btree_run_cb2(btree_s* b, void (*cb)(void *data, void *data2))
@@ -72,7 +92,7 @@ void btree_run_cb2(btree_s* b, void (*cb)(void *data, void *data2))
     btreelem_run_cb2_r(b->root, cb);
 }
 
-btreelem_s* btreelem_new(int key, void *data)
+btreelem_s* btreelem_new(long key, void *data)
 {
     btreelem_s *e = Malloc(btreelem_s);
 
@@ -105,7 +125,7 @@ void btreelem_destroy_r2(btreelem_s* e)
     free(e);
 }
 
-int btreelem_insert_r(btreelem_s* e, int key, void *data)
+int btreelem_insert_r(btreelem_s* e, long key, void *data)
 {
     int ret = 1;
 
@@ -130,19 +150,58 @@ int btreelem_insert_r(btreelem_s* e, int key, void *data)
     return ret;
 }
 
-void* btreelem_get_r(btreelem_s* e, int key)
+int btreelem_ensure_range_lr(btreelem_s *e, const long from, const long to)
+{
+    int ret = 0;
+    long value = (long) e->data;
+
+    if (e->key == from) {
+        if (value < to) {
+            e->data = (void*) to;
+        } else {
+            // Nothing to do, range already present
+        }
+
+    } else if (e->key > from) {
+        if (e->left == NULL) {
+            e->left = btreelem_new(from, (void*)to);
+            ret = 1;
+        } else {
+            ret = btreelem_ensure_range_lr(e->left, from, to);
+        }
+
+    } else { // if (e->key < from)
+        if (value >= from) {
+            if (value < to) {
+                e->data = (void*) to;
+            } else {
+                // Nothing to do, range already present
+            }
+        } else {
+            if (e->right == NULL) {
+                e->right = btreelem_new(from, (void*)to);
+                ret = 1;
+            } else {
+                ret = btreelem_ensure_range_lr(e->right, from, to);
+            }
+        }
+    }
+
+    return ret;
+}
+
+void* btreelem_get_r(btreelem_s* e, long key)
 {
     void *data = NULL;
 
-    if (e->key == key)
+    if (e->key == key) {
         data = e->data;
 
-    else if (e->key > key) {
+    } else if (e->key > key) {
         if (e->left)
             data = btreelem_get_r(e->left, key);
-    }
 
-    else {
+    } else {
         if (e->right)
             data = btreelem_get_r(e->right, key);
     }
@@ -157,7 +216,7 @@ void btreelem_print_r(btreelem_s* e, int depth)
 
     for (int i = 0; i < depth; ++i)
         Out(" ");
-    Put("key:%d data:%ld\n", e->key, (long) e->data);
+    Put("key:%ld data:%ld", e->key, (long) e->data);
 
     if (e->left)
         btreelem_print_r(e->left, depth);
@@ -186,14 +245,21 @@ void btree_test(void)
     void* somedata = (void*)b;
 
     assert(1 == btree_insert(b, 1, (void*)1));
+    assert(1 == b->size);
     assert(1 == btree_insert(b, 2, (void*)2));
+    assert(2 == b->size);
     assert(1 == btree_insert(b, 3, (void*)3));
+    assert(3 == b->size);
     assert(1 == (long)btree_get(b, 1));
 
     assert(1 == btree_insert(b, 1234, somedata));
+    assert(4 == b->size);
     assert(1 == btree_insert(b, 13, somedata));
+    assert(5 == b->size);
     assert(1 == btree_insert(b, 666, somedata));
+    assert(6 == b->size);
     assert(0 == btree_insert(b, 13, somedata));
+    assert(6 == b->size);
 
     assert(NULL != btree_get(b, 666));
     assert(NULL == btree_get(b, 777));
@@ -203,6 +269,35 @@ void btree_test(void)
     assert(42 == (long)btree_get(b, 42));
 
     btree_print(b);
+    btree_destroy(b);
+
+    b = btree_new();
+    assert(0 == b->size);
+
+    btree_ensure_range_l(b, 0, 23);
+    assert(btree_get_l(b, 0) == (long) btree_get(b, 0));
+    assert(23 == btree_get_l(b, 0));
+
+    btree_ensure_range_l(b, 0, 23);
+    btree_ensure_range_l(b, 10, 10);
+    btree_ensure_range_l(b, 22, 25);
+    assert(25 == btree_get_l(b, 0));
+    assert(1 == b->size);
+
+    btree_ensure_range_l(b, 300, 25);
+    assert(2 == b->size);
+
+    btree_ensure_range_l(b, 200, 25);
+    assert(3 == b->size);
+    assert(25 == btree_get_l(b, 200));
+
+    btree_ensure_range_l(b, 200, 1000);
+    assert(3 == b->size);
+    assert(1000 == btree_get_l(b, 200));
+
+    btree_print(b);
 
     btree_destroy(b);
+
+    exit(0);
 }

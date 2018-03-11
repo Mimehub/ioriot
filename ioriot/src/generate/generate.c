@@ -196,7 +196,7 @@ void generate_write_init_cb(void *data)
 
     if (l->required && strlen(l->path) > 0) {
         fprintf(g->replay_fd, "%d|%d|%ld|%s|\n",
-                l->is_dir, l->is_file, -l->vsize_deficit, l->path);
+                l->is_dir, l->is_file, 666L, l->path);
     }
 }
 
