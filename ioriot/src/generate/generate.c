@@ -81,8 +81,23 @@ status_e generate_run(options_s *opts)
 
     set_limits_drop_root(opts->user);
 
+    // Check for correct capture format version 
+    meta_s *meta = meta_new(capture_fd);
+    meta_read_start(meta);
+
+    long capture_version = 0;
+    if (meta_read_l(meta, "capture_version", &capture_version)) {
+        Put("Capture version is '%ld'", capture_version);
+        if (capture_version != CAPTURE_VERSION) {
+            Error(".capture file of incompatible version, got %x, expected %x",
+                  (int)capture_version, CAPTURE_VERSION);
+        }
+    }
+
+    meta_destroy(meta);
+
     // Reserve first few bytes for meta information
-    meta_s *meta = meta_new(g->replay_fd);
+    meta = meta_new(g->replay_fd);
     meta_reserve(meta);
 
     // The writer will write the .replay file
@@ -108,6 +123,9 @@ status_e generate_run(options_s *opts)
     // either the parser or the writer thread!
 
     while ((read = getline(&line, &len, capture_fd)) != -1) {
+        if (line[0] == '#')
+            continue;
+
         if (0 > ++g->lineno) {
             Error("lineno:%lu Line number overflow", g->lineno);
         }

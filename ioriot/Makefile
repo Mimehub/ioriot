@@ -11,7 +11,7 @@ all: compile
 quick: clean ctags compile sudo_install
 cshell: compile
 	gdb -ex='break main; run' --args ./$(NAME)
-test: compile
+gdbtest: compile
 	gdb -ex=run --args ./$(NAME) -U
 compile: $(OBJS)
 	$(CC) $(STATIC) $(DEBUG) $(LIBS) $(OBJS) -o $(NAME)

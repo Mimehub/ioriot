@@ -40,7 +40,7 @@ void meta_destroy(meta_s *m)
 
 void meta_reserve(meta_s *m)
 {
-    // TODO: Use a hole in the .replay file to reserve space
+    // Improvemend: Use a hole in the .replay file to reserve space
     char buf[_MAX_META_LEN];
     Mset(&buf, '#', _MAX_META_LEN-1, char);
     fprintf(m->replay_fd, "%s\n", buf);

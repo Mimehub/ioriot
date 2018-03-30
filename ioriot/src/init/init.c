@@ -59,12 +59,12 @@ void init_extract_header(init_s *i, off_t *init_offset)
     meta_s *m = meta_new(i->replay_fd);
     meta_read_start(m);
 
-    long version = 0;
-    if (meta_read_l(m, "version", &version)) {
-        Put("Replay version is '%ld'", version);
-        if (version != REPLAY_VERSION) {
+    long replay_version = 0;
+    if (meta_read_l(m, "replay_version", &replay_version)) {
+        Put("Replay version is '%ld'", replay_version);
+        if (replay_version != REPLAY_VERSION) {
             Error(".replay file of incompatible version, got %x, expected %x",
-                  (int)version, REPLAY_VERSION);
+                  (int)replay_version, REPLAY_VERSION);
         }
     }
 
@@ -136,7 +136,7 @@ status_e init_run(options_s *opts)
     // Process the INIT section of the .replay file line by line.
 
     while ((read = getline(&line, &len, i->replay_fd)) != -1) {
-        Debug(line);
+        //Debug(line);
         char *tok = strtok_r(line, "|", &saveptr);
 
         for (int ntok = 0; tok; ntok++) {
