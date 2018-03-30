@@ -34,3 +34,5 @@ todo:
 	fgrep ../TODO ./src/*
 ctags:
 	ctags ./src/*.{h,c} ./src/*/*.{h,c}
+test: clean all
+	./ioriot -U

@@ -74,6 +74,7 @@ static void _print_synopsis(void)
     Put("\tioriot -d");
     Put("\tioriot -P");
     Put("\tioriot -T [-n NAME]");
+    Put("\tioriot -U");
     Put("\tioriot -V");
 }
 
@@ -99,6 +100,7 @@ static void _print_help(void)
     Put("\t-R REPLAYFILE Init and replay in one run (-i and -r combined)");
     Put("\t-S STATSFILE  Write a stats file at the end of a test");
     Put("\t-T            Trash data directories");
+    Put("\t-U            Run I/O Riot's unit tests");
     Put("\t-P            Purge all trash directories of all tests)");
     Put("\t-V            Print I/O Riot program version");
     Put("\t-w WD_BASE    The working directory's base path");
@@ -109,7 +111,7 @@ static void _print_help(void)
     Put("\t 1.) sudo ioriot -c io.capture");
     Put("\t 2.) sudo ioriot -r io.replay -c io.capture -u paul -n test1");
     Put("\t 3.) sudo ioriot -i io.replay");
-    Put("\t 4.) sudo ioriot -r io.replay -S");
+    Put("\t 4.) sudo ioriot -r io.replay -S stats.txt");
 }
 
 /**
