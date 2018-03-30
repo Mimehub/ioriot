@@ -28,7 +28,7 @@
 /** Controls how many tasks can be queued and buffered per worker thread */
 #define TASK_BUFFER_PER_THREAD 512
 /** Version of I/O Riot */
-#define IORIOT_VERSION "0.4-develop"
+#define IORIOT_VERSION "0.4"
 /** Copyright information */
 #define IORIOT_COPYRIGHT "(c) Mimecast 2018"
 /** Max open files resource user limit */
