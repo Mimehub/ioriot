@@ -90,12 +90,12 @@ void set_limits_drop_root(const char *user)
         rl.rlim_cur = rl.rlim_max = SET_RLIMIT_NOFILE;
         if (0 != setrlimit(RLIMIT_NOFILE, &rl)) {
             Errno("Could not set RLIMIT_NOFILE to '%lld'!",
-                    (long long) SET_RLIMIT_NOFILE)
+                  (long long) SET_RLIMIT_NOFILE)
         }
         rl.rlim_cur = rl.rlim_max = SET_RLIMIT_NPROC;
         if (0 != setrlimit(RLIMIT_NPROC, &rl)) {
             Errno("Could not set RLIMIT_NPROC to '%lld'!",
-                    (long long) SET_RLIMIT_NPROC)
+                  (long long) SET_RLIMIT_NPROC)
         }
 
         if (!Eq("root", user)) {
@@ -155,19 +155,19 @@ void start_pthread(pthread_t *thread, void*(*cb)(void*), void *data)
     int rc = pthread_create(thread, NULL, cb, data);
 
     switch (rc) {
-        case 0:
-            break;
-        case EAGAIN:
-            Error("Out of resources while creating pthread (%d)", rc);
-            break;
-        case EINVAL:
-            Error("Ivalid settings while creating pthread (%d)", rc);
-            break;
-        case EPERM:
-            Error("No permissions to configure pthread (%d)", rc);
-        default:
-            Error("Unknown error while creating pthread (%d)", rc);
-            break;
+    case 0:
+        break;
+    case EAGAIN:
+        Error("Out of resources while creating pthread (%d)", rc);
+        break;
+    case EINVAL:
+        Error("Ivalid settings while creating pthread (%d)", rc);
+        break;
+    case EPERM:
+        Error("No permissions to configure pthread (%d)", rc);
+    default:
+        Error("Unknown error while creating pthread (%d)", rc);
+        break;
     }
 }
 

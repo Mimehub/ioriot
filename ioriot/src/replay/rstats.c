@@ -70,7 +70,7 @@ void rstats_stop(rstats_s* s)
 {
     gettimeofday(&s->end_time, NULL);
     s->duration= ((s->end_time.tv_sec - s->start_time.tv_sec) * 1000
-                   + (s->end_time.tv_usec - s->start_time.tv_usec) / 1000) / 1000;
+                  + (s->end_time.tv_usec - s->start_time.tv_usec) / 1000) / 1000;
 
 }
 

@@ -21,7 +21,8 @@
 
 #include "../macros.h"
 
-void _write_random_to_stream(FILE *fp, unsigned long bytes) {
+void _write_random_to_stream(FILE *fp, unsigned long bytes)
+{
     char *buf = NULL;
     int max_chunk = 50000000; // 50 mebibyetes
 

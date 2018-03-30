@@ -232,7 +232,7 @@ int main(int argc, char **argv)
         Cleanup(cleanup_run(opts));
 
     } else if (opts->capture_file && !opts->replay_file) {
-        // We are going to capture I/O 
+        // We are going to capture I/O
         Cleanup(capture_run(opts));
 
     } else if (opts->capture_file && opts->replay_file) {

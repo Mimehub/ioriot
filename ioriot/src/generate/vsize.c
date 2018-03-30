@@ -210,7 +210,7 @@ void vsize_ensure_data_range(vsize_s *v, btree_s **ranges, const long offset, co
 
     } else { // if (*ranges != NULL)
         btree_ensure_range_l(*ranges, offset, offset+bytes,
-                IGNORE_FILE_HOLE_BYTES);
+                             IGNORE_FILE_HOLE_BYTES);
     }
 }
 
@@ -219,7 +219,7 @@ void vsize_read(vsize_s *v, void *vfd, const char *path, const int bytes)
     vfd_s *vfd_ = vfd;
 
     if (v->write_ranges == NULL ||
-            !btree_has_range_l(v->write_ranges, vfd_->offset, vfd_->offset+bytes)) {
+        !btree_has_range_l(v->write_ranges, vfd_->offset, vfd_->offset+bytes)) {
         vsize_ensure_data_range(v, &v->read_ranges, vfd_->offset, bytes);
         _Set_required(v);
         _Set_file(v);

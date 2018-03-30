@@ -77,7 +77,7 @@ status_e capture_run(options_s *opts)
     Out("NOTICE: It is good practise first to stop all processes, then to ");
     Out("start capturing, and then to start all processes again. The reason ");
     Out("is that processes may have already open file handles. In that case ");
-    Out("I/O Riot would be unable to replay these! This may be improved "); 
+    Out("I/O Riot would be unable to replay these! This may be improved ");
     Put("in a future release!");
     Put("To abort capturing now send Ctrl+C, otherwise wait 1h");
     Put("Capturing I/O via: '%s'", staprun_command);

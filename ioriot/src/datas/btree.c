@@ -115,7 +115,7 @@ void btreelem_destroy_r(btreelem_s* e)
 {
     if (e->left)
         btreelem_destroy_r(e->left);
-    if (e->right) 
+    if (e->right)
         btreelem_destroy_r(e->right);
 
     free(e);
