@@ -77,6 +77,15 @@ int mkdir_p(const char *path, mode_t mode, long *num_dirs_created);
 void append_random_to_file(char *path, unsigned long bytes);
 
 /**
+ * @brief Writes random to a file at a given seek offset
+ *
+ * @param path The file path
+ * @param bytes The amount of bytes
+ * @param offset The seek offset in bytes
+ */
+void write_random_to_file(char *path, unsigned long bytes, off_t offset);
+
+/**
  * @brief Ensures that a directory exists
  *
  * @param path The directory path

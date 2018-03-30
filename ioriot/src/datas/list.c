@@ -14,7 +14,6 @@
 
 #include "list.h"
 
-
 list_s *list_new()
 {
     list_s *l = Malloc(list_s);

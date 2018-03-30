@@ -21,11 +21,9 @@
 
 #include "../macros.h"
 
-void append_random_to_file(char *path, unsigned long bytes)
-{
+void _write_random_to_stream(FILE *fp, unsigned long bytes) {
     char *buf = NULL;
     int max_chunk = 50000000; // 50 mebibyetes
-    FILE *fp = Fopen(path, "a");
 
     for (;;) {
         if (bytes > max_chunk) {
@@ -54,7 +52,25 @@ void append_random_to_file(char *path, unsigned long bytes)
 
     if (buf)
         free(buf);
-    fclose(fp);
+}
+
+void append_random_to_file(char *path, unsigned long bytes)
+{
+    FILE *fp = Fopen(path, "a");
+    if (fp) {
+        _write_random_to_stream(fp, bytes);
+        fclose(fp);
+    }
+}
+
+void write_random_to_file(char *path, unsigned long bytes, off_t offset)
+{
+    FILE *fp = Fopen(path, "w");
+    if (fp) {
+        fseek(fp, offset, SEEK_SET);
+        _write_random_to_stream(fp, bytes);
+        fclose(fp);
+    }
 }
 
 long ensure_dir_exists(const char *path)

@@ -16,7 +16,7 @@
 #define VSIZE_H
 
 #include "../utils/utils.h"
-#include "../datas/hmap.h"
+#include "../datas/btree.h"
 #include "../vfd.h"
 
 /**
@@ -30,11 +30,11 @@
  */
 typedef struct vsize_s_ {
     char *path; /**< The path to the file/directory */
-    off_t offset; /**< The current file offset */
+    long bytes; /**< The virtual size */
+    btree_s *read_ranges; /**< Used to store used data ranges in a file with holes */
+    btree_s *write_ranges; /**< Used to store used data ranges in a file with holes */
     unsigned long id; /**< The vsize id */
     void *generate; /**< A pointer to the generate object */
-    long vsize; /**< The virtual size */
-    long vsize_deficit; /**< Size to use for file creating during init mode */
     bool renamed; /**< True if file/dir has been renamed */
     bool required; /**< True if init mode will create this file/dir */
     bool is_dir; /**< True if this file/dir is a directory */
@@ -72,19 +72,18 @@ void vsize_destroy(vsize_s *v);
 void init_parent_dir(vsize_s *v, const char *path);
 
 /**
- * @brief Adjusts the vsize
+ * @brief Ensure that we have a data range in the virtual file
  *
  * Compares the virtual file size of the file in the vsize
- * object to the the offset in the virtual file descriptor.
- * In case the offset is higher we have a size deficit and
- * we need to mark it. That way ioriot can ensure that
- * during init mode it will create a file with the correct
- * size prior of running the test!
+ * object to the the given offsets. This is required just in case
+ * we have holes in the file to be replayed.
  *
  * @param v The virtual size object
- * @param vfd The virtual file descriptor object
+ * @param ranges The ranges object to operaet on
+ * @param offset The start offset
+ * @param bytes The amount of bytes
  */
-void vsize_adjust(vsize_s *v, vfd_s* vfd);
+void vsize_ensure_data_range(vsize_s *v, btree_s **ranges, const long offset, const long bytes);
 
 /**
  * @brief Adjust vsize on open

@@ -17,7 +17,6 @@
 #include "generate.h"
 
 // Helper macros
-
 #define _Set_file(v) v->is_file = true; v->unsure = v->is_dir = false
 #define _Set_dir(v) v->is_dir = true; v->unsure = v->is_file = false
 #define _Set_unsure(v) v->unsure = true
@@ -35,14 +34,14 @@ vsize_s* vsize_new(char *file_path, const unsigned long id,
     v->inserted = false;
     v->is_dir = false;
     v->is_file = false;
-    v->offset = -1;
     v->path = Clone(file_path);
     v->renamed = false;
     v->required = false;
     v->unsure = false;
     v->updates = 0;
-    v->vsize = 0;
-    v->vsize_deficit = 0;
+    v->bytes = 0;
+    v->read_ranges = NULL;
+    v->write_ranges = NULL;
 
     return v;
 }
@@ -51,6 +50,11 @@ void vsize_destroy(vsize_s *v)
 {
     if (!v)
         return;
+
+    if (v->read_ranges)
+        btree_destroy(v->read_ranges);
+    if (v->write_ranges)
+        btree_destroy(v->write_ranges);
 
     free(v->path);
     free(v);
@@ -91,9 +95,9 @@ void init_parent_dir(vsize_s *v, const char *path)
 void vsize_open(vsize_s *v, void *vfd, const char *path, const int flags)
 {
 
-    // v->first_encounter == false means, that this is the first occurance of
+    // v->updates == 0 means, that this is the first occurance of
     // this path and we didn't initialise it (means we didn't ensure that
-    // we want to create all parent directories etc.
+    // we want to create all parent directories etc.)
 
     if (v->updates == 0) {
         // We may use a recycled vfd object! When opening a file we always
@@ -161,56 +165,87 @@ void vsize_rename(vsize_s *v, vsize_s *v2,
         // We are not 100% sure that this is really a file,
         // the path might be still a directory though!
         _Set_unsure(v2);
+        v2->updates++;
 
         // For debugging purposes only
         _Set_renamed(v2);
-        v2->updates++;
     }
 }
 
-void vsize_adjust(vsize_s *v, vfd_s* vfd)
+void vsize_ensure_data_range(vsize_s *v, btree_s **ranges, const long offset, const long bytes)
 {
-    if (v->vsize >= vfd->offset)
-        return;
+    if (*ranges == NULL) {
+        if (offset == 0) {
+            if (v->bytes + IGNORE_FILE_HOLE_BYTES < bytes) {
+                // No file hole, just set the new (larger) vsize
+                v->bytes = bytes;
+            } else {
+                // Nothing to do, vsize is already sufficient
+            }
 
-    long deficit = v->vsize - vfd->offset;
-    if (deficit < v->vsize_deficit) {
-        v->vsize_deficit = deficit;
-        _Set_required(v);
-        _Set_file(v);
+        } else { // if (offset > 0)
+            if (offset <= v->bytes) {
+                // We won't add a hole to the file here either
+                if (v->bytes < bytes) {
+                    // No file hole, just set the new (larger) bytes
+                    v->bytes = bytes;
+                } else {
+                    // Nothing to do, bytes is already sufficient
+                }
+            } else { // if (offset > v->bytes)
+                // From offset larger than bytes, we have a hole in the file!
+                *ranges = btree_new();
+
+                // Insert root data range
+                btree_insert(*ranges, 0, (void*)v->bytes);
+
+                // This value is not used anymore, we use the btree instead from now
+                // to store all used data ranges of a file.
+                v->bytes = -1;
+
+                // Rerun this function with a data range btree initialised
+                vsize_ensure_data_range(v, ranges, offset, bytes);
+            }
+        }
+
+    } else { // if (*ranges != NULL)
+        btree_ensure_range_l(*ranges, offset, offset+bytes,
+                IGNORE_FILE_HOLE_BYTES);
     }
 }
 
 void vsize_read(vsize_s *v, void *vfd, const char *path, const int bytes)
 {
     vfd_s *vfd_ = vfd;
+
+    if (v->write_ranges == NULL ||
+            !btree_has_range_l(v->write_ranges, vfd_->offset, vfd_->offset+bytes)) {
+        vsize_ensure_data_range(v, &v->read_ranges, vfd_->offset, bytes);
+        _Set_required(v);
+        _Set_file(v);
+    }
+
     vfd_->offset += bytes;
-    vsize_adjust(v, vfd_);
     v->updates++;
-}
-
-void vsize_seek(vsize_s *v, void *vfd, const long new_offset)
-{
-    //vfd_s *vfd_ = vfd;
-
-    // The file's offset can be greater than the file's current size, in which
-    // case the next write to the file will extend the file. This is referred
-    // to as creating a hole in a file and is allowed. However, this behaviour
-    // does not suit the estimation of the file size before we want to run the
-    // test.
-
-    // TODO: Implement file hole support!
-    //v->updates++;
 }
 
 void vsize_write(vsize_s *v, void *vfd, const char *path, const int bytes)
 {
     vfd_s *vfd_ = vfd;
+    vsize_ensure_data_range(v, &v->write_ranges, vfd_->offset, bytes);
     vfd_->offset += bytes;
+    v->updates++;
+}
 
-    if (v->vsize < vfd_->offset)
-        v->vsize = vfd_->offset;
+void vsize_seek(vsize_s *v, void *vfd, const long new_offset)
+{
+    vfd_s *vfd_ = vfd;
 
+    // The file's offset can be greater than the file's current size, in which
+    // case the next write to the file will extend the file. This is referred
+    // to as creating a hole in a file.
+
+    vfd_->offset = new_offset;
     v->updates++;
 }
 

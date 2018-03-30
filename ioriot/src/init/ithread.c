@@ -90,9 +90,13 @@ void ithread_run_task(ithread_s *t, itask_s *task)
     } else if (task->is_file) {
         if (!ensure_file_exists(task->path, &task->dirs_created)) {
             task->files_created++;
-            if (task->vsize > 0) {
-                append_random_to_file(task->path, task->vsize);
-                task->sizes_created += task->vsize;
+            if (task->bytes > 0) {
+                if (task->offset > 0) {
+                    write_random_to_file(task->path, task->bytes, task->offset);
+                } else {
+                    append_random_to_file(task->path, task->bytes);
+                }
+                task->sizes_created += task->bytes;
             }
         }
     }

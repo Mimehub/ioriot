@@ -69,6 +69,7 @@ typedef enum {
     FCNTL = 70,
     GETDENTS,
     LSEEK,
+    LLSEEK,
 
     // mmap syscalls
     MMAP2 = 80,

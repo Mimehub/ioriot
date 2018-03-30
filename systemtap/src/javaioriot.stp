@@ -100,6 +100,20 @@ probe syscall.lseek.return {
     }
 }
 
+probe syscall.llseek.return {
+    if(execname() == "java") {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,O=%d;:,W=%d;:,b=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                (@entry($offset_high) << 32 | @entry($offset_low)),
+                @entry($whence),
+                $return);
+    }
+}
+
 probe syscall.fcntl.return {
     if(execname() == "java") {
         printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,F=%d;:,G=%d;:,s=%d;:,\n",

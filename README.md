@@ -339,6 +339,7 @@ Currently, these file I/O related syscalls are supported (as of CentOS 7):
 open
 openat
 lseek
+llseek
 fcntl
 creat
 write

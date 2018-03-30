@@ -23,7 +23,8 @@
 typedef struct itask_s_ {
     bool is_dir;
     bool is_file;
-    long vsize;
+    long offset;
+    long bytes;
     char *path;
     long dirs_created;
     long files_created;

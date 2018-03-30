@@ -151,6 +151,7 @@ void rioop_run(rprocess_s *p, rthread_s *t, rtask_s *task)
         rioop_getdents(p, t, task);
         break;
     case LSEEK:
+    case LLSEEK:
         rioop_lseek(p, t, task);
         break;
 

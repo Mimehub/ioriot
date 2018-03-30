@@ -98,24 +98,26 @@ void set_limits_drop_root(const char *user)
                     (long long) SET_RLIMIT_NPROC)
         }
 
-        Put("Dropping root privileges to user '%s'", user);
-        struct passwd *pw = getpwnam(user);
+        if (!Eq("root", user)) {
+            Put("Dropping root privileges to user '%s'", user);
+            struct passwd *pw = getpwnam(user);
 
-        /* process is running as root, drop privileges */
-        if (setgid(pw->pw_gid) != 0) {
-            Errno("Unable to drop group privileges!");
-        }
-        if (setuid(pw->pw_uid) != 0) {
-            Errno("Unable to drop user privileges!");
+            /* process is running as root, drop privileges */
+            if (setgid(pw->pw_gid) != 0) {
+                Errno("Unable to drop group privileges!");
+            }
+            if (setuid(pw->pw_uid) != 0) {
+                Errno("Unable to drop user privileges!");
+            }
         }
     }
 
     /*
-    getrlimit(RLIMIT_NOFILE, &rl);
-    Put("Max open files: '%lld'", (long long) rl.rlim_cur);
-    getrlimit(RLIMIT_NPROC, &rl);
-    Put("Max open processes : '%lld'", (long long) rl.rlim_cur);
-    */
+       getrlimit(RLIMIT_NOFILE, &rl);
+       Put("Max open files: '%lld'", (long long) rl.rlim_cur);
+       getrlimit(RLIMIT_NPROC, &rl);
+       Put("Max open processes : '%lld'", (long long) rl.rlim_cur);
+       */
 }
 
 void get_loadavg_s(char *readbuf)
@@ -153,19 +155,19 @@ void start_pthread(pthread_t *thread, void*(*cb)(void*), void *data)
     int rc = pthread_create(thread, NULL, cb, data);
 
     switch (rc) {
-    case 0:
-        break;
-    case EAGAIN:
-        Error("Out of resources while creating pthread (%d)", rc);
-        break;
-    case EINVAL:
-        Error("Ivalid settings while creating pthread (%d)", rc);
-        break;
-    case EPERM:
-        Error("No permissions to configure pthread (%d)", rc);
-    default:
-        Error("Unknown error while creating pthread (%d)", rc);
-        break;
+        case 0:
+            break;
+        case EAGAIN:
+            Error("Out of resources while creating pthread (%d)", rc);
+            break;
+        case EINVAL:
+            Error("Ivalid settings while creating pthread (%d)", rc);
+            break;
+        case EPERM:
+            Error("No permissions to configure pthread (%d)", rc);
+        default:
+            Error("Unknown error while creating pthread (%d)", rc);
+            break;
     }
 }
 

@@ -68,7 +68,6 @@ void generate_destroy(generate_s *g)
     free(g);
 }
 
-
 status_e generate_run(options_s *opts)
 {
     generate_s *g = generate_new(opts);
@@ -189,14 +188,30 @@ status_e generate_run(options_s *opts)
     return SUCCESS;
 }
 
+void _write_ranges_cb(long start, void *data, void *data2)
+{
+    vsize_s *v = data2;
+    generate_s *g = v->generate;
+    long end = (long) data;
+    long bytes = end-start;
+    if (bytes > 0) {
+        fprintf(g->replay_fd, "%d|%d|%ld|%ld|%s|\n",
+                v->is_dir, v->is_file, start, bytes, v->path);
+    }
+}
+
 void generate_write_init_cb(void *data)
 {
-    vsize_s *l = data;
-    generate_s *g = l->generate;
+    vsize_s *v = data;
+    generate_s *g = v->generate;
 
-    if (l->required && strlen(l->path) > 0) {
-        fprintf(g->replay_fd, "%d|%d|%ld|%s|\n",
-                l->is_dir, l->is_file, -l->vsize_deficit, l->path);
+    if (v->required && strlen(v->path) > 0) {
+        if (v->read_ranges) {
+            btree_run_cb2(v->read_ranges, _write_ranges_cb, data);
+        } else if (v->bytes >= 0) {
+            fprintf(g->replay_fd, "%d|%d|%ld|%ld|%s|\n",
+                    v->is_dir, v->is_file, 0L, v->bytes, v->path);
+        }
     }
 }
 

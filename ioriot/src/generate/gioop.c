@@ -27,7 +27,7 @@ status_e gioop_run(gwriter_s *w, gtask_s *t)
     generate_s *g = w->generate;
 
     // Get the virtual process data object from the virtual PID space and store
-    // a pointer to it to t->gprocess
+    // a pointer to it at t->gprocess
     generate_gprocess_by_realpid(g, t);
 
     // One of the open syscalls may openes a file handle succesfully
@@ -108,6 +108,9 @@ status_e gioop_run(gwriter_s *w, gtask_s *t)
 
     } else if (Eq(t->op, "lseek")) {
         Cleanup(gioop_lseek(w, t, g));
+
+    } else if (Eq(t->op, "llseek")) {
+        Cleanup(gioop_llseek(w, t, g));
 
     } else if (Eq(t->op, "getdents")) {
         Cleanup(gioop_getdents(w, t, g));
@@ -551,6 +554,22 @@ status_e gioop_lseek(gwriter_s *w, gtask_s *t, generate_s *g)
 
     generate_vsize_by_path(g, t, t->vfd->path);
     Gioop_write(LSEEK, "%ld|%ld|%ld|%ld|lseek",
+                t->mapped_fd, t->offset, t->whence, t->bytes);
+
+    if (t->bytes >= 0)
+        vsize_seek(t->vsize, t->vfd, t->bytes);
+
+    return SUCCESS;
+}
+
+status_e gioop_llseek(gwriter_s *w, gtask_s *t, generate_s *g)
+{
+    if (!t->has_fd) {
+        return ERROR;
+    }
+
+    generate_vsize_by_path(g, t, t->vfd->path);
+    Gioop_write(LLSEEK, "%ld|%ld|%ld|%ld|llseek",
                 t->mapped_fd, t->offset, t->whence, t->bytes);
 
     if (t->bytes >= 0)
