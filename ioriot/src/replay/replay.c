@@ -150,7 +150,7 @@ status_e replay_run(options_s *opts)
         pid_t pid;
         int rworker_status = SUCCESS;
 
-       while ((pid = wait(&rworker_status)) > 0) {
+        while ((pid = wait(&rworker_status)) > 0) {
             if (rworker_status != SUCCESS)
                 status = rworker_status;
 

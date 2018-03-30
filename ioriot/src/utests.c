@@ -18,7 +18,6 @@
 #include "datas/btree.h"
 #include "datas/hmap.h"
 #include "datas/list.h"
-#include "datas/ranges.h"
 #include "datas/rbuffer.h"
 #include "utils/utils.h"
 
@@ -26,9 +25,6 @@ void utests_run()
 {
     fprintf(stderr, "Running btree_test()\n");
     btree_test();
-
-    fprintf(stderr, "Running ranges_test()\n");
-    ranges_test();
 
     fprintf(stderr, "Running amap_test()\n");
     amap_test();

@@ -71,6 +71,15 @@ function absolute_path (path) {
     return task_dentry_path(tc, pwd_dentry, pwd_mnt) . "/" . path;
 }
 
+# Stop probing after 1h (for safety)
+probe timer.s(3600) {
+    exit();
+}
+
+probe begin {
+    printf("#|capture_version=%d|\n", 2);
+}
+
 probe syscall.open.return, syscall.openat.return {
     if (pid() == target()) {
         pathname = user_string(@entry($filename))
@@ -95,6 +104,20 @@ probe syscall.lseek.return {
                 name,
                 @entry($fd),
                 @entry($offset),
+                @entry($whence),
+                $return);
+    }
+}
+
+probe syscall.llseek.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,O=%d;:,W=%d;:,b=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                (@entry($offset_high) << 32 | @entry($offset_low)),
                 @entry($whence),
                 $return);
     }
@@ -581,11 +604,6 @@ probe syscall.exit_group {
                 tid(),
                 name);
     }
-}
-
-# Stop probing after 1h (for safety)
-probe timer.s(3600) {
-    exit();
 }
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4

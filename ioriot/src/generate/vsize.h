@@ -30,8 +30,9 @@
  */
 typedef struct vsize_s_ {
     char *path; /**< The path to the file/directory */
-    long vsize; /**< The virtual size */
-    btree_s *ranges; /**< Used to store used data ranges in a file with holes */
+    long bytes; /**< The virtual size */
+    btree_s *read_ranges; /**< Used to store used data ranges in a file with holes */
+    btree_s *write_ranges; /**< Used to store used data ranges in a file with holes */
     unsigned long id; /**< The vsize id */
     void *generate; /**< A pointer to the generate object */
     bool renamed; /**< True if file/dir has been renamed */
@@ -78,10 +79,11 @@ void init_parent_dir(vsize_s *v, const char *path);
  * we have holes in the file to be replayed.
  *
  * @param v The virtual size object
- * @param from The start offset
- * @param to The end offset
+ * @param ranges The ranges object to operaet on
+ * @param offset The start offset
+ * @param bytes The amount of bytes
  */
-void vsize_ensure_data_range(vsize_s *v, const long from, const long to);
+void vsize_ensure_data_range(vsize_s *v, btree_s **ranges, const long offset, const long bytes);
 
 /**
  * @brief Adjust vsize on open

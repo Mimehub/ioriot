@@ -24,7 +24,7 @@ options_s *options_new()
     o->wd_base = "/usr/local/ioriot";
     o->num_workers = 4;
     o->num_threads_per_worker = 128;
-    o->user = "mcuser";
+    o->user = "nobody";
     o->name = "test0";
     o->init = false;
     o->replay = false;

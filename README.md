@@ -114,6 +114,7 @@ sudo ioriot -c ~/io.capture -m targetedioriot.ko -p PID
 The resulting capture log looks like this and can be multiple GB in size:
 
 ```sh
+#|capture_version=2|
 t=1511381122062;:,i=7764:8093;:,o=open;:,d=162;:,p=///usr/local/mimecast/someapp/somesubdir/vd11-9:1;:,f=0;:,m=438;:,
 t=1511381122062;:,i=7764:8093;:,o=fstat;:,d=162;:,s=0;:,
 t=1511381122062;:,i=7764:8093;:,o=read;:,d=162;:,b=12;:,
@@ -186,7 +187,7 @@ After producing ``io.capture`` it must be pre-processed. The resulting replay lo
 To generate the the replay log ``io.replay`` from the capture log ``io.capture`` run:
 
 ```sh
-sudo ioriot -c io.capture -r io.replay -n NAME -u USER
+ioriot -c io.capture -r io.replay -n NAME -u USER
 ```
 
 In which NAME is a freely chosen name and USER must be a valid system user. It is the system user under which the replay test will run. This command also creates all required top level directories such as ``/.ioriot/NAME/``, ``/mnt/.ioriot/NAME/`` in all mounted file systems. These are the directories where the replay test will read/write files from/to. These directories will belong to user USER.
@@ -339,6 +340,7 @@ Currently, these file I/O related syscalls are supported (as of CentOS 7):
 open
 openat
 lseek
+llseek
 fcntl
 creat
 write

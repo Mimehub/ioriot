@@ -79,6 +79,7 @@ status_e gioop_readlinkat(gwriter_s *w, gtask_s *t, generate_s *g);
 status_e gioop_write(gwriter_s *w, gtask_s *t, generate_s *g);
 status_e gioop_writev(gwriter_s *w, gtask_s *t, generate_s *g);
 status_e gioop_lseek(gwriter_s *w, gtask_s *t, generate_s *g);
+status_e gioop_llseek(gwriter_s *w, gtask_s *t, generate_s *g);
 status_e gioop_getdents(gwriter_s *w, gtask_s *t, generate_s *g);
 status_e gioop_mkdir(gwriter_s *w, gtask_s *t, generate_s *g);
 status_e gioop_rmdir(gwriter_s *w, gtask_s *t, generate_s *g);

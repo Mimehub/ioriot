@@ -68,7 +68,6 @@ void generate_destroy(generate_s *g)
     free(g);
 }
 
-
 status_e generate_run(options_s *opts)
 {
     generate_s *g = generate_new(opts);
@@ -82,8 +81,23 @@ status_e generate_run(options_s *opts)
 
     set_limits_drop_root(opts->user);
 
+    // Check for correct capture format version 
+    meta_s *meta = meta_new(capture_fd);
+    meta_read_start(meta);
+
+    long capture_version = 0;
+    if (meta_read_l(meta, "capture_version", &capture_version)) {
+        Put("Capture version is '%ld'", capture_version);
+        if (capture_version != CAPTURE_VERSION) {
+            Error(".capture file of incompatible version, got %x, expected %x",
+                  (int)capture_version, CAPTURE_VERSION);
+        }
+    }
+
+    meta_destroy(meta);
+
     // Reserve first few bytes for meta information
-    meta_s *meta = meta_new(g->replay_fd);
+    meta = meta_new(g->replay_fd);
     meta_reserve(meta);
 
     // The writer will write the .replay file
@@ -109,6 +123,9 @@ status_e generate_run(options_s *opts)
     // either the parser or the writer thread!
 
     while ((read = getline(&line, &len, capture_fd)) != -1) {
+        if (line[0] == '#')
+            continue;
+
         if (0 > ++g->lineno) {
             Error("lineno:%lu Line number overflow", g->lineno);
         }
@@ -189,14 +206,30 @@ status_e generate_run(options_s *opts)
     return SUCCESS;
 }
 
+void _write_ranges_cb(long start, void *data, void *data2)
+{
+    vsize_s *v = data2;
+    generate_s *g = v->generate;
+    long end = (long) data;
+    long bytes = end-start;
+    if (bytes > 0) {
+        fprintf(g->replay_fd, "%d|%d|%ld|%ld|%s|\n",
+                v->is_dir, v->is_file, start, bytes, v->path);
+    }
+}
+
 void generate_write_init_cb(void *data)
 {
-    vsize_s *l = data;
-    generate_s *g = l->generate;
+    vsize_s *v = data;
+    generate_s *g = v->generate;
 
-    if (l->required && strlen(l->path) > 0) {
-        fprintf(g->replay_fd, "%d|%d|%ld|%s|\n",
-                l->is_dir, l->is_file, 666L, l->path);
+    if (v->required && strlen(v->path) > 0) {
+        if (v->read_ranges) {
+            btree_run_cb2(v->read_ranges, _write_ranges_cb, data);
+        } else if (v->bytes >= 0) {
+            fprintf(g->replay_fd, "%d|%d|%ld|%ld|%s|\n",
+                    v->is_dir, v->is_file, 0L, v->bytes, v->path);
+        }
     }
 }
 

@@ -35,7 +35,7 @@ void itask_destroy(itask_s *task)
 void itask_reset_stats(itask_s *task)
 {
     task->is_dir = task->is_file = false;
-    task->sizes_created = task->vsize = 0;
+    task->sizes_created = task->offset = task->bytes = 0;
     task->dirs_created = task->files_created = 0;
 
     if (task->path) {
@@ -60,7 +60,7 @@ void itask_extract_stats(itask_s *task, long* dirs_created, long *files_created,
 
 void itask_print(itask_s *task)
 {
-    Put("itask(%p): is_dir:%d is_file:%d vsize:%ld path:%s",
+    Put("itask(%p): is_dir:%d is_file:%d offset:%ld bytes:%ld path:%s",
         (void*)task, task->is_dir, task->is_file,
-        task->vsize, task->path);
+        task->offset, task->bytes, task->path);
 }

@@ -62,6 +62,14 @@ void* btree_get(btree_s* b, long key)
     return btreelem_get_r(b->root, key);
 }
 
+bool btree_has_range_l(btree_s* b, const long start, const long end)
+{
+    if (b->root == NULL)
+        return false;
+
+    return btreelem_has_range_lr(b->root, start, end);
+}
+
 long btree_get_l(btree_s* b, long key)
 {
     void *data = btree_get(b, key);
@@ -71,12 +79,12 @@ long btree_get_l(btree_s* b, long key)
         return -1;
 }
 
-void btree_ensure_range_l(btree_s* b, long from, long to)
+void btree_ensure_range_l(btree_s* b, const long start, const long end, const long threshold)
 {
     if (b->root == NULL) {
-        btree_insert(b, from, (void*)to);
+        btree_insert(b, start, (void*)end);
     } else {
-        if (1 == btreelem_ensure_range_lr(b->root, from, to))
+        if (1 == btreelem_ensure_range_lr(b->root, start, end, threshold))
             b->size++;
     }
 }
@@ -87,9 +95,9 @@ void btree_print(btree_s* b)
     btreelem_print_r(b->root, 1);
 }
 
-void btree_run_cb2(btree_s* b, void (*cb)(void *data, void *data2))
+void btree_run_cb2(btree_s* b, void (*cb)(long key, void *data, void *data2), void *data2)
 {
-    btreelem_run_cb2_r(b->root, cb);
+    btreelem_run_cb2_r(b->root, cb, data2);
 }
 
 btreelem_s* btreelem_new(long key, void *data)
@@ -107,7 +115,7 @@ void btreelem_destroy_r(btreelem_s* e)
 {
     if (e->left)
         btreelem_destroy_r(e->left);
-    if (e->right) 
+    if (e->right)
         btreelem_destroy_r(e->right);
 
     free(e);
@@ -150,39 +158,46 @@ int btreelem_insert_r(btreelem_s* e, long key, void *data)
     return ret;
 }
 
-int btreelem_ensure_range_lr(btreelem_s *e, const long from, const long to)
+int btreelem_ensure_range_lr(btreelem_s *e, const long start, const long end, const long threshold)
 {
     int ret = 0;
     long value = (long) e->data;
 
-    if (e->key == from) {
-        if (value < to) {
-            e->data = (void*) to;
+    //Debug("%ld %ld %ld", start, end, threshold);
+
+    if (e->key == start) {
+        if (value < end) {
+            e->data = (void*) end;
         } else {
             // Nothing to do, range already present
         }
 
-    } else if (e->key > from) {
+    } else if (e->key > start) {
         if (e->left == NULL) {
-            e->left = btreelem_new(from, (void*)to);
-            ret = 1;
+            if (value <= end) {
+                e->key = start;
+                e->data = (void*)end;
+            } else {
+                e->left = btreelem_new(start, (void*)end);
+                ret = 1;
+            }
         } else {
-            ret = btreelem_ensure_range_lr(e->left, from, to);
+            ret = btreelem_ensure_range_lr(e->left, start, end, threshold);
         }
 
-    } else { // if (e->key < from)
-        if (value >= from) {
-            if (value < to) {
-                e->data = (void*) to;
+    } else { // if (e->key < start)
+        if (value >= start) {
+            if (value < end) {
+                e->data = (void*) end;
             } else {
                 // Nothing to do, range already present
             }
         } else {
             if (e->right == NULL) {
-                e->right = btreelem_new(from, (void*)to);
+                e->right = btreelem_new(start, (void*)end);
                 ret = 1;
             } else {
-                ret = btreelem_ensure_range_lr(e->right, from, to);
+                ret = btreelem_ensure_range_lr(e->right, start, end, threshold);
             }
         }
     }
@@ -209,6 +224,27 @@ void* btreelem_get_r(btreelem_s* e, long key)
     return data;
 }
 
+bool btreelem_has_range_lr(btreelem_s* e, const long start, const long end)
+{
+    long value = (long)e->data;
+
+    if (e->key <= start && value >= end) {
+        return true;
+
+    } else if (e->key > start) {
+        if (e->left)
+            return btreelem_has_range_lr(e->left, start, end);
+        else
+            return false;
+
+    } else {
+        if (e->right)
+            return btreelem_has_range_lr(e->right, start, end);
+        else
+            return false;
+    }
+}
+
 void btreelem_print_r(btreelem_s* e, int depth)
 {
     if (!e)
@@ -225,18 +261,18 @@ void btreelem_print_r(btreelem_s* e, int depth)
         btreelem_print_r(e->right, depth+1);
 }
 
-void btreelem_run_cb2_r(btreelem_s* e, void (*cb)(void *data, void *data2))
+void btreelem_run_cb2_r(btreelem_s* e, void (*cb)(long key, void *data, void *data2), void *data2)
 {
     if (!e)
         return;
 
-    cb((void*)(long)e->key, e->data);
+    cb(e->key, e->data, data2);
 
     if (e->left)
-        btreelem_run_cb2_r(e->left, cb);
+        btreelem_run_cb2_r(e->left, cb, data2);
 
     if (e->right)
-        btreelem_run_cb2_r(e->right, cb);
+        btreelem_run_cb2_r(e->right, cb, data2);
 }
 
 void btree_test(void)
@@ -250,7 +286,7 @@ void btree_test(void)
     assert(2 == b->size);
     assert(1 == btree_insert(b, 3, (void*)3));
     assert(3 == b->size);
-    assert(1 == (long)btree_get(b, 1));
+    assert(1 == btree_get_l(b, 1));
 
     assert(1 == btree_insert(b, 1234, somedata));
     assert(4 == b->size);
@@ -266,7 +302,7 @@ void btree_test(void)
 
     assert(0 == btree_insert(b, 666, somedata));
     assert(1 == btree_insert(b, 42, (void*)42));
-    assert(42 == (long)btree_get(b, 42));
+    assert(42 == btree_get_l(b, 42));
 
     btree_print(b);
     btree_destroy(b);
@@ -274,29 +310,40 @@ void btree_test(void)
     b = btree_new();
     assert(0 == b->size);
 
-    btree_ensure_range_l(b, 0, 23);
+    btree_ensure_range_l(b, 0, 23, 0);
     assert(btree_get_l(b, 0) == (long) btree_get(b, 0));
     assert(23 == btree_get_l(b, 0));
+    assert(btree_has_range_l(b, 2, 10));
 
-    btree_ensure_range_l(b, 0, 23);
-    btree_ensure_range_l(b, 10, 10);
-    btree_ensure_range_l(b, 22, 25);
-    assert(25 == btree_get_l(b, 0));
-    assert(1 == b->size);
+    assert(!btree_has_range_l(b, 300, 325));
+    btree_ensure_range_l(b, 300, 325, 0);
+    assert(2 == b->size);
+    assert(325 == btree_get_l(b, 300));
+    assert(btree_has_range_l(b, 300, 325));
+    assert(!btree_has_range_l(b, 300, 326));
 
-    btree_ensure_range_l(b, 300, 25);
+    btree_ensure_range_l(b, 200, 3321, 0);
     assert(2 == b->size);
 
-    btree_ensure_range_l(b, 200, 25);
-    assert(3 == b->size);
-    assert(25 == btree_get_l(b, 200));
+    btree_ensure_range_l(b, 200, 1000, 0);
+    assert(2 == b->size);
+    assert(3321 == btree_get_l(b, 200));
 
-    btree_ensure_range_l(b, 200, 1000);
-    assert(3 == b->size);
-    assert(1000 == btree_get_l(b, 200));
+    btree_ensure_range_l(b, 0, 23, 0);
+    btree_ensure_range_l(b, 10, 10, 0);
+    btree_ensure_range_l(b, 22, 25, 0);
+    assert(25 == btree_get_l(b, 0));
+    assert(2 == b->size);
 
+    assert(!btree_has_range_l(b, 4000, 4000));
+    btree_ensure_range_l(b, 4000, 4000, 0);
+    assert(3 == b->size);
+    assert(btree_has_range_l(b, 4000, 4000));
+    assert(!btree_has_range_l(b, 4000, 4001));
+    assert(!btree_has_range_l(b, 3999, 4000));
     btree_print(b);
 
+    btree_print(b);
     btree_destroy(b);
 
     exit(0);
