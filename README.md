@@ -187,7 +187,7 @@ After producing ``io.capture`` it must be pre-processed. The resulting replay lo
 To generate the the replay log ``io.replay`` from the capture log ``io.capture`` run:
 
 ```sh
-sudo ioriot -c io.capture -r io.replay -n NAME -u USER
+ioriot -c io.capture -r io.replay -n NAME -u USER
 ```
 
 In which NAME is a freely chosen name and USER must be a valid system user. It is the system user under which the replay test will run. This command also creates all required top level directories such as ``/.ioriot/NAME/``, ``/mnt/.ioriot/NAME/`` in all mounted file systems. These are the directories where the replay test will read/write files from/to. These directories will belong to user USER.
