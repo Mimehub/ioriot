@@ -36,8 +36,8 @@ install:
 	test -f javaioriot.ko && cp -v javaioriot.ko $(DESTDIR)/ || exit 0
 	test -f targetedioriot.ko && cp -v targetedioriot.ko $(DESTDIR)/ || exit 0
 	test -f traceio.ko && cp -v traceio.ko $(DESTDIR)/ || exit 0
-	test -f javatraceio.ko && cp -v traceio.ko $(DESTDIR)/ || exit 0
-	test -f targetedtraceio.ko && cp -v traceio.ko $(DESTDIR)/ || exit 0
+	test -f javatraceio.ko && cp -v javatraceio.ko $(DESTDIR)/ || exit 0
+	test -f targetedtraceio.ko && cp -v targetedtraceio.ko $(DESTDIR)/ || exit 0
 uninstall:
 	test ! -z "$(DESTDIR)" && test -d $(DESTDIR)/ && find $(DESTDIR) -name \*.ko -delete || exit 0
 deinstall: uninstall
