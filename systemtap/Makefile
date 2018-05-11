@@ -7,16 +7,18 @@ all: prepare compile
 prepare:
 	sed 's/execname() != "stapio"/pid() == target()/' ./src/ioriot.stp > ./src/targetedioriot.stp
 	sed 's/execname() != "stapio"/execname() == "java"/' ./src/ioriot.stp > ./src/javaioriot.stp
-compile_traceio:
+	sed 's/execname() != "stapio"/pid() == target()/' ./src/traceio.stp > ./src/targetedtraceio.stp
+	sed 's/execname() != "stapio"/execname() == "java"/' ./src/traceio.stp > ./src/javatraceio.stp
+compile:
 	@echo Crosscompiling for Kernel version $(KERNEL)
-	for stp in traceio; do \
+	for stp in ioriot javaioriot targetedioriot; do \
 		stap -v ./src/$$stp.stp -p 4 -r $(KERNEL) -m $$stp \
 		-D MAXSTRINGLEN=255 -D MAXACTION=10000 -D MAXSKIPPED=10000\
 		-g --suppress-time-limits --suppress-handler-errors; \
 	done
-compile:
+traceio_compile:
 	@echo Crosscompiling for Kernel version $(KERNEL)
-	for stp in ioriot javaioriot targetedioriot; do \
+	for stp in traceio javatraceio targetedtraceio; do \
 		stap -v ./src/$$stp.stp -p 4 -r $(KERNEL) -m $$stp \
 		-D MAXSTRINGLEN=255 -D MAXACTION=10000 -D MAXSKIPPED=10000\
 		-g --suppress-time-limits --suppress-handler-errors; \
@@ -33,6 +35,9 @@ install:
 	test -f ioriot.ko && cp -v ioriot.ko $(DESTDIR)/ || exit 0
 	test -f javaioriot.ko && cp -v javaioriot.ko $(DESTDIR)/ || exit 0
 	test -f targetedioriot.ko && cp -v targetedioriot.ko $(DESTDIR)/ || exit 0
+	test -f traceio.ko && cp -v traceio.ko $(DESTDIR)/ || exit 0
+	test -f javatraceio.ko && cp -v traceio.ko $(DESTDIR)/ || exit 0
+	test -f targetedtraceio.ko && cp -v traceio.ko $(DESTDIR)/ || exit 0
 uninstall:
 	test ! -z "$(DESTDIR)" && test -d $(DESTDIR)/ && find $(DESTDIR) -name \*.ko -delete || exit 0
 deinstall: uninstall

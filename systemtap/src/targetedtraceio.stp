@@ -1,0 +1,990 @@
+#!/usr/bin/env stap
+
+# Copyright 2018 Mimecast Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This script is used to capture I/O on a Linux based system in order to replay
+# the same I/O via the ioriot command line utility.
+#
+# The tool will generate one line per captured I/O syscall to a .capture log
+# file.
+#
+# The key/value separator is ';:,', example line:
+#
+#   t=1509989598023;:,i=17159:17358;:,o=open;:,d=167;:,p=/tmp/test;:,f=0;:,m=438;:,
+#
+# It may be that SystemTap will skip probes or interrupts probes in case of
+# system overload. As a result we can have corrupt lines in the log. That's why
+# we use a special field separator ';:,' to detect corrupt lines more robustly.
+#
+# The line uses the following format keys (we use many different of these, the
+# only benefit over a more generic approach is to detect corrupt lines more
+# easily):
+#
+# Format keys:
+# t: Time
+# i: PID:TID (process and thread ID)
+# o: Operation name
+# O: Offset or owner/user UID
+# W: Whence
+# d: File/dir descriptor
+# p: File path
+# P: File path 2
+# f: Flags
+# m: Mode
+# b: Bytes
+# c: Count
+# s: Return status
+# t: Optional text
+# F: FCNTL command
+# G: FCNTL arg or user group UID
+# T: Optional text (debugging purpose only)
+# a: Address
+# A: Address 2
+#
+
+# Return the full qualified version of path
+function absolute_path (path) {
+    # Is it already a full qualified path?
+    if (substr(path,0,1) == "/") {
+        return path;
+    }
+
+    # Look into the in Kernel task structure to look up the corresponding
+    # mount point and directory entry...
+    tc = task_current()
+    pwd_dentry = @cast(tc, "task_struct")->fs->pwd->dentry
+    pwd_mnt = @cast(tc, "task_struct")->fs->pwd->mnt
+
+    # Construct a full qualified path from it!
+    return task_dentry_path(tc, pwd_dentry, pwd_mnt) . "/" . path;
+}
+
+# Stop probing after 1h (for safety)
+probe timer.s(3600) {
+    exit();
+}
+
+probe begin {
+    printf("#|capture_version=%d|\n", 2);
+}
+
+probe syscall.open, syscall.openat {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.open.return, syscall.openat.return {
+    if (pid() == target()) {
+        pathname = user_string(@entry($filename))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,f=%d;:,m=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                $return,
+                absolute_path(pathname),
+                @entry($flags),
+                @entry($mode));
+    }
+}
+
+probe syscall.lseek {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.lseek.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,O=%d;:,W=%d;:,b=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                @entry($offset),
+                @entry($whence),
+                $return);
+    }
+}
+
+probe syscall.llseek {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.llseek.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,O=%d;:,W=%d;:,b=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                (@entry($offset_high) << 32 | @entry($offset_low)),
+                @entry($whence),
+                $return);
+    }
+}
+
+probe syscall.fcntl {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.fcntl.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,F=%d;:,G=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                @entry($cmd),
+                @entry($arg),
+                $return);
+    }
+}
+
+probe syscall.creat {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.creat.return {
+    if (pid() == target()) {
+        pathname = user_string(@entry($pathname))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,m=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                $return,
+                absolute_path(pathname),
+                @entry($mode));
+    }
+}
+
+probe syscall.write, syscall.writev {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.write.return, syscall.writev.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,b=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                $return);
+    }
+}
+
+probe syscall.unlink {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.unlink.return {
+    if(pid() == target()) {
+        pathname = user_string(@entry($pathname))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                absolute_path(pathname),
+                $return);
+    }
+}
+
+probe syscall.unlinkat {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.unlinkat.return {
+    if(pid() == target()) {
+        pathname = user_string(@entry($pathname))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,f=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($dfd),
+                absolute_path(pathname),
+                @entry($flag),
+                $return);
+    }
+}
+
+probe syscall.rename, syscall.renameat, syscall.renameat2 {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.rename.return, syscall.renameat.return, syscall.renameat2.return {
+    if(pid() == target()) {
+        oldname = user_string(@entry($oldname))
+        newname = user_string(@entry($newname))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,P=%s;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                absolute_path(oldname),
+                absolute_path(newname),
+                $return);
+    }
+}
+
+probe syscall.read, syscall.readv {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.read.return, syscall.readv.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,b=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                $return);
+    }
+}
+
+probe syscall.readahead {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.readahead.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,b=%ld;:,O=%ld;:,c=%ld\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                $return,
+                @entry($offset),
+                @entry($count));
+    }
+}
+
+probe syscall.readdir {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.readdir.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                $return);
+    }
+}
+
+probe syscall.readlink {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.readlink.return {
+    if(pid() == target()) {
+        pathname = user_string(@entry($path))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                absolute_path(pathname),
+                $return);
+    }
+}
+
+probe syscall.readlinkat {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.readlinkat.return {
+    if(pid() == target()) {
+        pathname = user_string(@entry($pathname))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                absolute_path(pathname),
+                $return);
+    }
+}
+
+probe syscall.fdatasync, syscall.fsync {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.fdatasync.return, syscall.fsync.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                $return);
+    }
+}
+
+probe syscall.sync_file_range {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.sync_file_range.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,O=%ld;:,b=%ld;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                @entry($offset),
+                @entry($nbytes),
+                $return);
+    }
+}
+
+probe syscall.sync {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.sync.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                $return);
+    }
+}
+
+probe syscall.syncfs {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.syncfs.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                $return);
+    }
+}
+
+probe syscall.close {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.close.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                $return);
+    }
+}
+
+probe syscall.getdents {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.getdents.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,c=%d;:,b=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                @entry($count),
+                $return);
+    }
+}
+
+probe syscall.mkdir {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.mkdir.return {
+    if(pid() == target()) {
+        pathname = user_string(@entry($pathname))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,m=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                absolute_path(pathname),
+                @entry($mode),
+                $return);
+    }
+}
+
+probe syscall.rmdir {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.rmdir.return {
+    if(pid() == target()) {
+        pathname = user_string(@entry($pathname))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                absolute_path(pathname),
+                $return);
+    }
+}
+
+probe syscall.mkdirat {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.mkdirat.return {
+    if(pid() == target()) {
+        pathname = user_string(@entry($pathname))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,m=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($dfd),
+                absolute_path(pathname),
+                @entry($mode),
+                $return);
+    }
+}
+
+probe syscall.stat {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.stat.return {
+    if(pid() == target()) {
+        pathname = user_string(@entry($filename))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                absolute_path(pathname),
+                $return);
+    }
+}
+
+probe syscall.statfs, syscall.statfs64 {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.statfs.return, syscall.statfs64.return {
+    if(pid() == target()) {
+        pathname = user_string(@entry($pathname))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                absolute_path(pathname),
+                $return);
+    }
+}
+
+probe syscall.fstatfs, syscall.fstatfs64 {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.fstatfs.return, syscall.fstatfs64.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                $return);
+    }
+}
+
+probe syscall.lstat {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.lstat.return {
+    if(pid() == target()) {
+        pathname = user_string(@entry($filename))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                absolute_path(pathname),
+                $return);
+    }
+}
+
+probe syscall.fstat {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.fstat.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                $return);
+    }
+}
+
+probe syscall.fstatat {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.fstatat.return {
+    if(pid() == target()) {
+        pathname = user_string(@entry($filename))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%ld;:,p=%s;:,f=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($dfd),
+                absolute_path(pathname),
+                @entry($flag),
+                $return);
+    }
+}
+
+probe syscall.chmod, syscall.fchmodat {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.chmod.return, syscall.fchmodat.return {
+    if(pid() == target()) {
+        pathname = user_string(@entry($filename))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,m=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                absolute_path(pathname),
+                @entry($mode),
+                $return);
+    }
+}
+
+probe syscall.fchmod {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.fchmod.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,m=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                @entry($mode),
+                $return);
+    }
+}
+
+probe syscall.chown, syscall.chown16,
+      syscall.lchown, syscall.lchown16 {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.chown.return, syscall.chown16.return,
+      syscall.lchown.return, syscall.lchown16.return {
+    if(pid() == target()) {
+        pathname = user_string(@entry($filename))
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,O=%d;:,G=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                absolute_path(pathname),
+                @entry($user),
+                @entry($group),
+                $return);
+    }
+}
+
+probe syscall.fchown, syscall.fchown16 {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.fchown.return, syscall.fchown16.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%ld;:,O=%d;:,G=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($fd),
+                @entry($user),
+                @entry($group),
+                $return);
+    }
+}
+
+probe syscall.fchownat {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.fchownat.return {
+    pathname = user_string(@entry($filename))
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,O=%d;:,G=%d;:,f=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                absolute_path(pathname),
+                @entry($user),
+                @entry($group),
+                @entry($flag),
+                $return);
+    }
+}
+
+probe syscall.mmap2 {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.mmap2.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,a=%ld;:,b=%ld;:,m=%d;:,f=%d;:,d=%d;:,O=%ld;:,A=%ld;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($addr),
+                @entry($len),
+                @entry($prot),
+                @entry($flags),
+                @entry($fd),
+                @entry($pgoff),
+                $return);
+    }
+}
+
+probe syscall.mremap {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.mremap.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,a=%ld;:,A=%ld;:,b=%ld;:,f=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($new_addr),
+                @entry($addr),
+                @entry($new_len),
+                @entry($flags),
+                $return);
+    }
+}
+
+probe syscall.munmap {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.munmap.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,a=%ld;:,b=%ld;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($addr),
+                @entry($len),
+                $return);
+    }
+}
+
+probe syscall.msync {
+    if (pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,w=entry;:,;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+probe syscall.msync.return {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,a=%ld;:,b=%ld;:,f=%d;:,s=%d;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name,
+                @entry($start),
+                @entry($len),
+                @entry($flags),
+                $return);
+    }
+}
+
+probe syscall.exit_group {
+    if(pid() == target()) {
+        printf("t=%d;:,i=%d:%d;:,o=%s;:,\n",
+                gettimeofday_ms(),
+                pid(),
+                tid(),
+                name);
+    }
+}
+
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
