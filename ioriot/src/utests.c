@@ -16,6 +16,7 @@
 
 #include "datas/amap.h"
 #include "datas/btree.h"
+#include "datas/graph.h"
 #include "datas/hmap.h"
 #include "datas/list.h"
 #include "datas/rbuffer.h"
@@ -23,14 +24,17 @@
 
 void utests_run()
 {
+    fprintf(stderr, "Running graph_test()\n");
+    graph_test();
+
+    fprintf(stderr, "Running hmap_test()\n");
+    hmap_test();
+
     fprintf(stderr, "Running btree_test()\n");
     btree_test();
 
     fprintf(stderr, "Running amap_test()\n");
     amap_test();
-
-    fprintf(stderr, "Running hmap_test()\n");
-    hmap_test();
 
     fprintf(stderr, "Running list_test()\n");
     list_test();

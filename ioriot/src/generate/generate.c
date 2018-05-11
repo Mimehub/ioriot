@@ -81,7 +81,7 @@ status_e generate_run(options_s *opts)
 
     set_limits_drop_root(opts->user);
 
-    // Check for correct capture format version 
+    // Check for correct capture format version
     meta_s *meta = meta_new(capture_fd);
     meta_read_start(meta);
 

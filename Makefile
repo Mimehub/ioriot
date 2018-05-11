@@ -17,5 +17,7 @@ loc:
 	wc -l ./systemtap/src/*.stp ./ioriot/src/*.{h,c} ./ioriot/src/*/*.{h,c} | tail -n 1
 doxygen:
 	doxygen ./docs/doxygen.conf
+man:
+	ronn ./docs/ioriot.1.ronn
 test:
 	$(MAKE) -C ioriot test

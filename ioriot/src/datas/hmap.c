@@ -217,10 +217,17 @@ void* hmap_remove_l(hmap_s *h, const long key)
     return NULL;
 }
 
+void* hmap_replace(hmap_s *h, char *key, void *data)
+{
+    void *removed = hmap_remove(h, key);
+    hmap_insert(h, key, data);
+    return removed;
+}
+
 void* hmap_get(hmap_s *h, char *key)
 {
     int addr = hmap_get_addr(h, key);
-    if (h->data[addr] && strcmp(h->keys[addr], key) == 0) {
+    if (h->data[addr] && Eq(h->keys[addr], key)) {
         return h->data[addr];
 
     } else if (h->l[addr]) {
@@ -312,6 +319,11 @@ static void _hmap_test(hmap_s *h)
     assert(123 == (long)hmap_remove(h, "another value"));
     assert(0 == (long)hmap_remove(h, "another value"));
     assert(NULL == hmap_get(h, "another value"));
+
+    assert(1 == hmap_insert(h, "i am going to be replaced", (void*)321));
+    assert(321 == (long)hmap_get(h, "i am going to be replaced"));
+    assert(321 == (long)hmap_replace(h, "i am going to be replaced", (void*)3210));
+    assert(3210 == (long)hmap_get(h, "i am going to be replaced"));
 
     //hmap_print(h);
 }

@@ -3,20 +3,20 @@ PROCESSOR ?= $(shell uname -p)
 DESTDIR ?= /opt/ioriot/systemtap/$(KERNEL)
 UPDATEURI = http://debuginfo.centos.org/7/$(PROCESSOR)
 DOWNLOADIR ?= ./downloads
-all: prepare compile
+all: compile
 prepare:
 	sed 's/execname() != "stapio"/pid() == target()/' ./src/ioriot.stp > ./src/targetedioriot.stp
 	sed 's/execname() != "stapio"/execname() == "java"/' ./src/ioriot.stp > ./src/javaioriot.stp
 	sed 's/execname() != "stapio"/pid() == target()/' ./src/traceio.stp > ./src/targetedtraceio.stp
 	sed 's/execname() != "stapio"/execname() == "java"/' ./src/traceio.stp > ./src/javatraceio.stp
-compile:
+compile: prepare
 	@echo Crosscompiling for Kernel version $(KERNEL)
 	for stp in ioriot javaioriot targetedioriot; do \
 		stap -v ./src/$$stp.stp -p 4 -r $(KERNEL) -m $$stp \
 		-D MAXSTRINGLEN=255 -D MAXACTION=10000 -D MAXSKIPPED=10000\
 		-g --suppress-time-limits --suppress-handler-errors; \
 	done
-traceio_compile:
+traceio_compile: prepare
 	@echo Crosscompiling for Kernel version $(KERNEL)
 	for stp in traceio javatraceio targetedtraceio; do \
 		stap -v ./src/$$stp.stp -p 4 -r $(KERNEL) -m $$stp \
@@ -48,7 +48,7 @@ debuginfodownload:
 	test -f $(DOWNLOADIR)/kernel-debuginfo-common-$(PROCESSOR)-$(KERNEL).rpm || \
 		wget -P $(DOWNLOADIR) $(UPDATEURI)/kernel-debuginfo-common-$(PROCESSOR)-$(KERNEL).rpm
 debuginfolocalinstall:
-	#yum remove kernel-debuginfo kernel-debuginfo-common-$(PROCESSOR)
+	yum remove kernel-debuginfo kernel-debuginfo-common-$(PROCESSOR)
 	yum localinstall $(DOWNLOADIR)/kernel-debuginfo-common-$(PROCESSOR)-$(KERNEL).rpm \
 		$(DOWNLOADIR)/kernel-debuginfo-$(KERNEL).rpm
 todo:

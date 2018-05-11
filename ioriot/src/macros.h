@@ -21,7 +21,8 @@
 
 // String helpers
 #define Clone(str) notnull(strdup(str),__FILE__,__LINE__,0)
-#define Eq(str1,str2) strcmp(str1,str2) == 0
+#define Eq(str1,str2) (strcmp(str1,str2) == 0)
+#define Neq(str1,str2) (strcmp(str1,str2) != 0)
 
 // Number helpers
 #define Abs(num) num >= 0 ? num : -num
@@ -37,6 +38,8 @@
     notnull(malloc(sizeof(what)),__FILE__,__LINE__,1)
 #define Calloc(count,what) \
     notnull(calloc(count,sizeof(what)),__FILE__,__LINE__,count)
+#define Realloc(where,count,what) \
+    notnull(realloc(where,count*sizeof(what)),__FILE__,__LINE__,1)
 #define Mset(where,value,count,what) \
     memset(where,value,count*sizeof(what))
 
