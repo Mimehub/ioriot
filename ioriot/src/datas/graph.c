@@ -228,7 +228,7 @@ void graph_print(graph_s *g)
 graph_traverser_s *graph_traverser_new(void (*callback)(graph_node_s *node, unsigned long depth), int max_threads)
 {
     graph_traverser_s *t = Malloc(graph_traverser_s);
-        //tpool_add_work3(t->pool, _graph_traverser_traverse, t, e->next[i], (void*)(depth+1));
+    //tpool_add_work3(t->pool, _graph_traverser_traverse, t, e->next[i], (void*)(depth+1));
     t->pool = tpool_new(max_threads, _graph_traverser_traverse);
     t->callback = callback;
     return t;
