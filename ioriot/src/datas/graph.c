@@ -16,6 +16,42 @@
 
 #include "graph.h"
 
+static void _graph_traverser_traverse(void *data, void *data2, void *data3)
+{
+    graph_traverser_s *t = data;
+    graph_node_s *e = data2;
+    unsigned long depth = (long) data3;
+    pthread_mutex_lock(&e->mutex);
+
+    // Check if current node is traversed already
+    if (e->traversed)
+        goto cleanup;
+
+    for (int i = 0; i < e->num_prev; ++i) {
+        graph_node_s* prev = e->prev[i];
+        pthread_mutex_lock(&prev->mutex);
+        _Bool prev_traversed = prev->traversed;
+        pthread_mutex_unlock(&prev->mutex);
+        if (!prev_traversed)
+            goto cleanup;
+    }
+
+    // Deal with current node
+    t->callback(e, depth);
+    e->traversed = true;
+    pthread_mutex_unlock(&e->mutex);
+
+    // Tell thread pool to traverse following nodes
+    for (int i = 0; i < e->num_next; ++i)
+        tpool_add_work3(t->pool, t, e->next[i], (void*)(depth+1));
+
+    return;
+
+cleanup:
+    pthread_mutex_unlock(&e->mutex);
+}
+
+
 graph_node_s *graph_node_new(void *data, char *path)
 {
     static unsigned long id = 0;
@@ -192,7 +228,8 @@ void graph_print(graph_s *g)
 graph_traverser_s *graph_traverser_new(void (*callback)(graph_node_s *node, unsigned long depth), int max_threads)
 {
     graph_traverser_s *t = Malloc(graph_traverser_s);
-    t->pool = tpool_new(max_threads);
+        //tpool_add_work3(t->pool, _graph_traverser_traverse, t, e->next[i], (void*)(depth+1));
+    t->pool = tpool_new(max_threads, _graph_traverser_traverse);
     t->callback = callback;
     return t;
 }
@@ -203,46 +240,11 @@ void graph_traverser_destroy(graph_traverser_s* t)
     free(t);
 }
 
-static void _graph_traverser_traverse(void *data, void *data2, void *data3)
-{
-    graph_traverser_s *t = data;
-    graph_node_s *e = data2;
-    unsigned long depth = (long) data3;
-    pthread_mutex_lock(&e->mutex);
-
-    // Check if current node is traversed already
-    if (e->traversed)
-        goto cleanup;
-
-    for (int i = 0; i < e->num_prev; ++i) {
-        graph_node_s* prev = e->prev[i];
-        pthread_mutex_lock(&prev->mutex);
-        _Bool prev_traversed = prev->traversed;
-        pthread_mutex_unlock(&prev->mutex);
-        if (!prev_traversed)
-            goto cleanup;
-    }
-
-    // Deal with current node
-    t->callback(e, depth);
-    e->traversed = true;
-    pthread_mutex_unlock(&e->mutex);
-
-    // Tell thread pool to traverse following nodes
-    for (int i = 0; i < e->num_next; ++i)
-        tpool_add_work3(t->pool, _graph_traverser_traverse, t, e->next[i], (void*)(depth+1));
-
-    return;
-
-cleanup:
-    pthread_mutex_unlock(&e->mutex);
-}
-
 void graph_traverser_traverse(graph_traverser_s* t, graph_s *g)
 {
     pthread_mutex_lock(&g->mutex);
     if (g->root != NULL)
-        tpool_add_work3(t->pool, _graph_traverser_traverse, t, g->root, (void*)0);
+        tpool_add_work3(t->pool, t, g->root, (void*)0);
     pthread_mutex_unlock(&g->mutex);
 }
 
