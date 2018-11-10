@@ -33,8 +33,9 @@ void tpool_destroy(tpool_s *t)
 }
 
 void tpool_add_work3(tpool_s* t,
-        void (*callback)(void *data, void *data2, void *data3),
-        void *data, void *data2, void *data3){
+                     void (*callback)(void *data, void *data2, void *data3),
+                     void *data, void *data2, void *data3)
+{
     // TODO: Implement multi threading, as for now this is a dummy tpool
     callback(data, data2, data3);
 }
