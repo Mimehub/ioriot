@@ -16,37 +16,52 @@
 #define GRAPH_H
 
 #include "../defaults.h"
+#include "../tpool/tpool.h"
+
 #include "hmap.h"
 
 /**
- * @brief Definition of a graph element
+ * @brief Definition of a graph nodeent
  */
-typedef struct graph_elem_s_ {
-    unsigned int id; /**< The id of the graph element */
-    char *path; /** < The path of the graph element */
-    struct graph_elem_s_ **prev; /**< The previous elements */
-    struct graph_elem_s_ **next; /**< The next elements */
-    int num_prev; /**< Amount of prev elems */
-    int num_next; /**< Amount of next elems */
+typedef struct graph_node_s_ {
+    unsigned long id; /**< The id of the graph nodeent */
+    _Bool traversed; /**< Determines if node has been traversed already */
+    char *path; /** < The path of the graph nodeent */
+    struct graph_node_s_ **prev; /**< The previous nodeents */
+    struct graph_node_s_ **next; /**< The next nodeents */
+    int num_prev; /**< Amount of prev nodes */
+    int num_next; /**< Amount of next nodes */
     void *data; /**< Pointer to the stored data */
-    pthread_mutex_t mutex; /**< To sync access to this graph element */
+    pthread_mutex_t mutex; /**< To sync access to this graph nodeent */
 
-} graph_elem_s;
+} graph_node_s;
+
+/**
+ * @brief Definition of a graph traverser
+ */
+typedef struct graph_traverser_s_ {
+    tpool_s *pool; /**< The thread pool to traverse the graph */
+    void (*callback)(graph_node_s *node, unsigned long depth); /**< Callback to run on all nodes */
+} graph_traverser_s;
 
 /**
  * @brief Definition of a graph data structure
  */
 typedef struct graph_s_ {
-    graph_elem_s *root; /**< The root element */
+    graph_node_s *root; /**< The root nodeent */
     void (*data_destroy)(void *data); /**< Callback to destroy all data */
     hmap_s *paths; /**< The paths of the graph */
-    pthread_mutex_t mutex; /**< To sync access to this graph element */
+    pthread_mutex_t mutex; /**< To sync access to this graph nodeent */
 } graph_s;
 
-graph_elem_s *graph_elem_new(void *data, char *key);
-void graph_elem_destroy(graph_elem_s *e, void(*data_destroy)(void *data));
-void graph_elem_append(graph_elem_s *e, graph_elem_s *e2);
-void graph_elem_print(graph_elem_s *e);
+graph_node_s *graph_node_new(void *data, char *key);
+void graph_node_destroy(graph_node_s *e, void(*data_destroy)(void *data));
+void graph_node_append(graph_node_s *e, graph_node_s *e2);
+void graph_node_print(graph_node_s *e);
+
+graph_traverser_s *graph_traverser_new(void (*callback)(graph_node_s *node, unsigned long depth), int max_threads);
+void graph_traverser_destroy(graph_traverser_s* t);
+void graph_traverser_traverse(graph_traverser_s* t, graph_s *g);
 
 graph_s *graph_new(unsigned int init_size, void(*data_destroy)(void *data));
 void graph_destroy(graph_s* g);

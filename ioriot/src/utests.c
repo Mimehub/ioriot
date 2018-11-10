@@ -21,9 +21,13 @@
 #include "datas/list.h"
 #include "datas/rbuffer.h"
 #include "utils/utils.h"
+#include "tpool/tpool.h"
 
 void utests_run()
 {
+    fprintf(stderr, "Running tpool_test()\n");
+    tpool_test();
+
     fprintf(stderr, "Running graph_test()\n");
     graph_test();
 
