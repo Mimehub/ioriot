@@ -250,8 +250,9 @@ void btreelem_print_r(btreelem_s* e, int depth)
     if (!e)
         return;
 
-    for (int i = 0; i < depth; ++i)
+    for (int i = 0; i < depth; ++i) {
         Out(" ");
+    }
     Put("key:%ld data:%ld", e->key, (long) e->data);
 
     if (e->left)
