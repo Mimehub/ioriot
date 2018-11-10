@@ -16,21 +16,32 @@
 #define TPOOL_H
 
 #include "../defaults.h"
+#include "../datas/rbuffer.h"
 
 /**
  * @brief Definition of a tpool
  */
 typedef struct tpool_s_ {
-    int max_threads; /**< Max amount of threads */
+    pthread_mutex_t mutex; /**< To synchronize pool operations */
+    pthread_cond_t not_full; /**< To synchronize pool operations */
+    pthread_cond_t not_empty; /**< To synchronize pool operations */
+    pthread_t *threads; /**< Holds the POSIX threads */
+    _Bool terminate; /**< Determines whether threads should termiate */
+    void (*callback)(void *data, void *data2, void *data3); /**< The callback */
+    int num_threads; /**< Amount of threads */
+    rbuffer_s *datas; /**< The data to run the functions with */
+    rbuffer_s *datas2; /**< More data to run the functions with */
+    rbuffer_s *datas3; /**< More more data to run the functions with */
 } tpool_s;
 
 /**
  * @brief Creates a new thread pool
  *
- * @param max_threads The max amount of threads to use
+ * @param num_threads Amount of threads used
+ * @param callback The function to call on the provided data
  * @return The thread pool
  */
-tpool_s *tpool_new(int max_threads);
+tpool_s *tpool_new(int num_threads, void (*callback)(void *data, void *data2, void *data3));
 
 /**
  * @brief Destroys a thread pool
@@ -56,12 +67,11 @@ void tpool_join_threads(tpool_s* t);
  * First thread available will grab the work added
  *
  * @param t The thread pool
- * @param callback The function to call on the provided data
  * @param data Data passed to the callback function
  * @param data2 More data passed to the callback function
  * @param data3 More more data passed to the callback function
  */
-void tpool_add_work3(tpool_s* t, void (*callback)(void *data, void *data2, void *data3), void *data, void *data2, void *data3);
+void tpool_add_work3(tpool_s* t, void *data, void *data2, void *data3);
 
 /**
  * @brief Runs thread pool unit tests

@@ -88,8 +88,9 @@ status_e capture_run(options_s *opts)
     if ((fp = popen(staprun_command, "r")) == NULL) {
         Errno("Unable to invoke staprun command!");
     }
-    while (fgets(buf, 1024, fp) != NULL)
+    while (fgets(buf, 1024, fp) != NULL) {
         Out("stapio: %s", buf);
+    }
 
     if (0 != pclose(fp)) {
         Error("Problems invoking staprun command!");

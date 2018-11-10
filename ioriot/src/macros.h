@@ -15,9 +15,13 @@
 #ifndef MACROS_H
 #define MACROS_H
 
+// Cleanup helpers
 #define Cleanup(code) ret = code; goto cleanup
 #define Cleanup_unless(expr, code) \
     if (expr != code) { ret = code; goto cleanup; }
+
+// Control loop helpers
+#define Loop for(;;)
 
 // String helpers
 #define Clone(str) notnull(strdup(str),__FILE__,__LINE__,0)
