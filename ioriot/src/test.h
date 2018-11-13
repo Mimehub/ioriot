@@ -12,4 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "transl.h"
+#ifndef TEST_H
+#define TEST_H
+
+/**
+ * @brief For internal testing purposes only.
+ */
+void test_internal();
+
+#endif // TEST_H

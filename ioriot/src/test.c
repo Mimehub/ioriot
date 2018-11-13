@@ -12,4 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "transl.h"
+#include "test.h"
+
+#include "defaults.h"
+
+void test_internal()
+{
+    open("/tmp/test", 4162, S_IRWXU|S_IRWXG|S_IRWXO);
+}
