@@ -126,6 +126,7 @@ int main(int argc, char **argv)
     status_e ret = UNKNOWN;
 
     bool dont_drop_caches = false;
+    bool module_chosen = false;
     options_s *opts = options_new();
     int opt = 0;
 
@@ -195,6 +196,7 @@ int main(int argc, char **argv)
         case 'm':
             opts->module = Clone(optarg);
             Put("Module: %s", opts->module);
+            module_chosen = true;
             break;
         case 'n':
             opts->name = optarg;
@@ -228,6 +230,10 @@ int main(int argc, char **argv)
             Cleanup(ERROR);
         }
     }
+
+    // Use targeted module if we target a PID!
+    if (opts->pid != -1 && !module_chosen)
+        opts->module = "targetedioriot.ko";
 
     if (opts->purge || opts->trash) {
         // Clean up all temp data of previous test runs
