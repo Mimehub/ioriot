@@ -56,8 +56,6 @@ void gtask_init(gtask_s *t, char *line, const unsigned long lineno)
     t->flags = -1;
     t->G = -1;
     t->has_fd = false;
-    t->vsize = NULL;
-    t->vsize2 = NULL;
     t->lineno = lineno;
     t->mapped_fd = -1;
     t->mapped_time = -1;

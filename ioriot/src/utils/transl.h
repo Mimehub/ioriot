@@ -15,4 +15,6 @@
 #ifndef TRANSL_H
 #define TRANSL_H
 
+void transl_run(void);
+
 #endif // TRANSL_H

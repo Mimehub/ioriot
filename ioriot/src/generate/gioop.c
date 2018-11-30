@@ -26,10 +26,6 @@ status_e gioop_run(gwriter_s *w, gtask_s *t)
 
     generate_s *g = w->generate;
 
-    // Get the virtual process data object from the virtual PID space and store
-    // a pointer to it at t->gprocess
-    generate_gprocess_by_realpid(g, t);
-
     // One of the open syscalls may openes a file handle succesfully
     if (Eq(t->op, "open")) {
         Cleanup(gioop_open(w, t, g));
@@ -44,7 +40,6 @@ status_e gioop_run(gwriter_s *w, gtask_s *t)
     // Get the virtual file descriptor of a given real fd and store a pointer
     // to it to t->vfd.
     if (t->has_fd) {
-        ret = gprocess_vfd_by_realfd(t->gprocess, t);
         Cleanup_unless(SUCCESS, ret);
     }
 
@@ -213,40 +208,35 @@ cleanup:
 
 status_e gioop_open(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    if (!t->has_fd || t->path == NULL || t->flags == -1) {
-        return ERROR;
-    }
-
-    gprocess_create_vfd_by_realfd(t->gprocess, t, g);
-    generate_vsize_by_path(g, t, NULL);
-
+    /*
     Gioop_write(OPEN, "%ld|%s|%d|%d|open",
                 t->mapped_fd, t->path, t->mode, t->flags);
 
     if (t->fd > 0)
         vsize_open(t->vsize, t->vfd, t->path, t->flags);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_openat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd || t->path == NULL || t->flags == -1) {
         return ERROR;
     }
 
     gprocess_create_vfd_by_realfd(t->gprocess, t, g);
-    generate_vsize_by_path(g, t, NULL);
     Gioop_write(OPEN_AT, "%ld|%s|%d|%d|openat",
                 t->mapped_fd,t->path, t->mode, t->flags);
     if (t->fd > 0)
         vsize_open(t->vsize, t->vfd, t->path, t->flags);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_creat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd || t->path == NULL || t->flags == -1) {
         return ERROR;
     }
@@ -258,13 +248,14 @@ status_e gioop_creat(gwriter_s *w, gtask_s *t, generate_s *g)
                 t->mapped_fd, t->path, t->mode, t->flags);
     if (t->fd > 0)
         vsize_open(t->vsize, t->vfd, t->path, t->flags);
-
+    */
     return SUCCESS;
 }
 
 
 status_e gioop_close(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
@@ -280,12 +271,14 @@ status_e gioop_close(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (!(rbuffer_insert(g->vfd_buffer, t->vfd)))
         vfd_destroy(t->vfd);
+        */
 
     return SUCCESS;
 }
 
 status_e gioop_stat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL) {
         return ERROR;
     }
@@ -295,12 +288,13 @@ status_e gioop_stat(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->status == 0)
         vsize_stat(t->vsize, t->path);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_statfs(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL) {
         return ERROR;
     }
@@ -310,12 +304,13 @@ status_e gioop_statfs(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->status == 0)
         vsize_stat(t->vsize, t->path);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_statfs64(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL) {
         return ERROR;
     }
@@ -325,24 +320,26 @@ status_e gioop_statfs64(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->status == 0)
         vsize_stat(t->vsize, t->path);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_fstat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
 
     generate_vsize_by_path(g, t, t->vfd->path);
     Gioop_write(FSTAT, "%ld|%d|fstat", t->mapped_fd, t->status);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_fstatat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL) {
         return ERROR;
     }
@@ -352,36 +349,39 @@ status_e gioop_fstatat(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->status == 0)
         vsize_stat(t->vsize, t->path);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_fstatfs(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
 
     generate_vsize_by_path(g, t, t->vfd->path);
     Gioop_write(FSTATFS, "%ld|%d|fstatfs", t->mapped_fd, t->status);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_fstatfs64(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
 
     generate_vsize_by_path(g, t, t->vfd->path);
     Gioop_write(FSTATFS64, "%ld|%d|fstatfs64", t->mapped_fd, t->status);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_rename(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL || t->path2 == NULL ) {
         return ERROR;
     }
@@ -393,12 +393,13 @@ status_e gioop_rename(gwriter_s *w, gtask_s *t, generate_s *g)
         t->vsize2 = generate_vsize_by_path(g, NULL, t->path2);
         vsize_rename(t->vsize, t->vsize2, t->path, t->path2);
     }
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_renameat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL || t->path2 == NULL ) {
         return ERROR;
     }
@@ -410,11 +411,12 @@ status_e gioop_renameat(gwriter_s *w, gtask_s *t, generate_s *g)
         t->vsize2 = generate_vsize_by_path(g, NULL, t->path2);
         vsize_rename(t->vsize, t->vsize2, t->path, t->path2);
     }
-
+*/
     return SUCCESS;
 }
 status_e gioop_renameat2(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL || t->path2 == NULL ) {
         return ERROR;
     }
@@ -427,12 +429,13 @@ status_e gioop_renameat2(gwriter_s *w, gtask_s *t, generate_s *g)
         t->vsize2 = generate_vsize_by_path(g, NULL, t->path2);
         vsize_rename(t->vsize, t->vsize2, t->path, t->path2);
     }
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_read(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
@@ -442,12 +445,13 @@ status_e gioop_read(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->bytes > 0)
         vsize_read(t->vsize, t->vfd, t->vfd->path, t->bytes);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_readv(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
@@ -457,12 +461,14 @@ status_e gioop_readv(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->bytes > 0)
         vsize_read(t->vsize, t->vfd, t->vfd->path, t->bytes);
+*/
 
     return SUCCESS;
 }
 
 status_e gioop_readahead(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
@@ -470,24 +476,26 @@ status_e gioop_readahead(gwriter_s *w, gtask_s *t, generate_s *g)
     generate_vsize_by_path(g, t, t->vfd->path);
     Gioop_write(READAHEAD, "%ld|%ld|%ld|readahead",
                 t->mapped_fd, t->offset, t->count);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_readdir(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
 
     generate_vsize_by_path(g, t, t->vfd->path);
     Gioop_write(READDIR, "%ld|%d|readdir", t->mapped_fd, t->status);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_readlink(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL) {
         return ERROR;
     }
@@ -497,12 +505,13 @@ status_e gioop_readlink(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->status == 0)
         vsize_stat(t->vsize, t->path);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_readlinkat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL) {
         return ERROR;
     }
@@ -512,12 +521,13 @@ status_e gioop_readlinkat(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->status == 0)
         vsize_stat(t->vsize, t->path);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_write(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
@@ -527,12 +537,13 @@ status_e gioop_write(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->bytes > 0)
         vsize_write(t->vsize, t->vfd, t->path, t->bytes);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_writev(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
@@ -542,12 +553,13 @@ status_e gioop_writev(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->bytes > 0)
         vsize_write(t->vsize, t->vfd, t->path, t->bytes);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_lseek(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
@@ -558,12 +570,13 @@ status_e gioop_lseek(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->bytes >= 0)
         vsize_seek(t->vsize, t->vfd, t->bytes);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_llseek(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
@@ -574,12 +587,13 @@ status_e gioop_llseek(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->bytes >= 0)
         vsize_seek(t->vsize, t->vfd, t->bytes);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_getdents(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
@@ -587,12 +601,13 @@ status_e gioop_getdents(gwriter_s *w, gtask_s *t, generate_s *g)
     generate_vsize_by_path(g, t, t->vfd->path);
     Gioop_write(GETDENTS, "%ld|%ld|%ld|getdents",
                 t->mapped_fd, t->count, t->bytes);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_mkdir(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL) {
         return ERROR;
     }
@@ -602,11 +617,12 @@ status_e gioop_mkdir(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->status == 0)
         vsize_mkdir(t->vsize, t->path);
-
+*/
     return SUCCESS;
 }
 status_e gioop_rmdir(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL) {
         return ERROR;
     }
@@ -616,11 +632,13 @@ status_e gioop_rmdir(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->status == 0)
         vsize_rmdir(t->vsize, t->path);
-
+*/
     return SUCCESS;
 }
+
 status_e gioop_mkdirat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL) {
         return ERROR;
     }
@@ -630,12 +648,13 @@ status_e gioop_mkdirat(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->status == 0)
         vsize_mkdir(t->vsize, t->path);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_unlink(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL) {
         return ERROR;
     }
@@ -645,12 +664,14 @@ status_e gioop_unlink(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->status == 0)
         vsize_unlink(t->vsize, t->path);
+*/
 
     return SUCCESS;
 }
 
 status_e gioop_unlinkat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL) {
         return ERROR;
     }
@@ -660,12 +681,14 @@ status_e gioop_unlinkat(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->status == 0)
         vsize_unlink(t->vsize, t->path);
+        */
 
     return SUCCESS;
 }
 
 status_e gioop_lstat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL) {
         return ERROR;
     }
@@ -675,55 +698,61 @@ status_e gioop_lstat(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->status == 0)
         vsize_stat(t->vsize, t->path);
+        */
 
     return SUCCESS;
 }
 
 status_e gioop_fsync(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
 
     generate_vsize_by_path(g, t, t->vfd->path);
     Gioop_write(FSYNC, "%ld|%d|fsync", t->mapped_fd, t->status);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_fdatasync(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
 
     generate_vsize_by_path(g, t, t->vfd->path);
     Gioop_write(FDATASYNC, "%ld|%d|fdatasync", t->mapped_fd, t->status);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_sync(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     Gioop_write(SYNC, "%d|sync", t->status);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_syncfs(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
 
     generate_vsize_by_path(g, t, t->vfd->path);
     Gioop_write(SYNCFS, "%ld|%d|syncfs", t->mapped_fd, t->status);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_sync_file_range(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
@@ -731,12 +760,13 @@ status_e gioop_sync_file_range(gwriter_s *w, gtask_s *t, generate_s *g)
     generate_vsize_by_path(g, t, t->vfd->path);
     Gioop_write(SYNC_FILE_RANGE, "%ld|%ld|%ld|%d|sync_file_range",
                 t->mapped_fd, t->offset, t->bytes, t->status);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_fcntl(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
@@ -755,12 +785,13 @@ status_e gioop_fcntl(gwriter_s *w, gtask_s *t, generate_s *g)
     generate_vsize_by_path(g, t, t->vfd->path);
     Gioop_write(FCNTL, "%ld|%d|%d|%d|fcntl",
                 t->mapped_fd, t->F, t->G, t->status);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_chmod(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL) {
         return ERROR;
     }
@@ -770,24 +801,27 @@ status_e gioop_chmod(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->status == 0)
         vsize_stat(t->vsize, t->path);
+        */
 
     return SUCCESS;
 }
 
 status_e gioop_fchmod(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
 
     generate_vsize_by_path(g, t, t->vfd->path);
     Gioop_write(FCHMOD, "%ld|%d|%d|fchmod", t->mapped_fd, t->mode, t->status);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_chown(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL) {
         return ERROR;
     }
@@ -798,12 +832,13 @@ status_e gioop_chown(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->status == 0)
         vsize_stat(t->vsize, t->path);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_fchown(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (!t->has_fd) {
         return ERROR;
     }
@@ -811,12 +846,13 @@ status_e gioop_fchown(gwriter_s *w, gtask_s *t, generate_s *g)
     generate_vsize_by_path(g, t, t->vfd->path);
     // Hmm, maybe rename t->offset, because here it is used for the user UID
     Gioop_write(FCHOWN, "%ld|%ld|%d|%d|fchown", t->mapped_fd, t->offset, t->G, t->status);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_lchown(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     if (t->path == NULL) {
         return ERROR;
     }
@@ -827,25 +863,27 @@ status_e gioop_lchown(gwriter_s *w, gtask_s *t, generate_s *g)
 
     if (t->status == 0)
         vsize_stat(t->vsize, t->path);
-
+*/
     return SUCCESS;
 }
 
 status_e gioop_exit_group(gwriter_s *w, gtask_s *t, generate_s *g)
 {
+    /*
     // It means that the process and all its threads terminate.
     // Therefore close all file handles of that process!
     hmap_run_cb2(t->gprocess->vfd_map, gioop_close_all_vfd_cb, t);
 
     // Remove virtual process from pid map and destroy it
-    amap_unset(g->pid_map, t->pid);
     gprocess_destroy(t->gprocess);
+    */
 
     return SUCCESS;
 }
 
 void gioop_close_all_vfd_cb(void *data, void *data2)
 {
+    /*
     gtask_s *t = data2;
     t->vfd = data;
     generate_s *g = t->generate;
@@ -853,5 +891,6 @@ void gioop_close_all_vfd_cb(void *data, void *data2)
     generate_vsize_by_path(g, t, t->vfd->path);
     Gioop_write(CLOSE, "%ld|%d|close on exit_group", t->vfd->mapped_fd, 0);
     vsize_close(t->vsize, t->vfd);
+    */
 }
 

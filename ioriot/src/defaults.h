@@ -18,9 +18,9 @@
 #include "utils/utils.h"
 
 /** Version of the supported .capture format */
-#define CAPTURE_VERSION 2
+#define CAPTURE_VERSION 3
 /** Version of the supported .replay format */
-#define REPLAY_VERSION 2
+#define REPLAY_VERSION 3
 /** Max amount of tokens per line in the .capture file */
 #define MAX_TOKENS 10
 /** Max line length in either .capture or .replay file */
@@ -28,7 +28,7 @@
 /** Controls how many tasks can be queued and buffered per worker thread */
 #define TASK_BUFFER_PER_THREAD 512
 /** Version of I/O Riot */
-#define IORIOT_VERSION "0.4.1"
+#define IORIOT_VERSION "0.5.0-develop"
 /** Copyright information */
 #define IORIOT_COPYRIGHT "(c) Mimecast 2018"
 /** Max open files resource user limit */

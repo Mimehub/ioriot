@@ -17,7 +17,6 @@
 
 #include "../datas/rbuffer.h"
 #include "../defaults.h"
-#include "vsize.h"
 #include "gtask.h"
 #include "generate.h"
 

@@ -13,3 +13,7 @@
 // limitations under the License.
 
 #include "transl.h"
+
+void transl_run(void)
+{
+}
