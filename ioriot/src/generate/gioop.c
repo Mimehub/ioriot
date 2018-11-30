@@ -14,6 +14,12 @@
 
 #include "gioop.h"
 
+static void _graph_insert(gwriter_s *w, generate_s *g, char *path, void *data)
+{
+    if (path)
+        graph_insert(g->graph, path, data);
+}
+
 status_e gioop_run(gwriter_s *w, gtask_s *t)
 {
     status_e ret = SUCCESS;
@@ -28,21 +34,22 @@ status_e gioop_run(gwriter_s *w, gtask_s *t)
 
     // One of the open syscalls may openes a file handle succesfully
     if (Eq(t->op, "open")) {
-        Cleanup(gioop_open(w, t, g));
+        _graph_insert(w, g, t->path, NULL);
 
     } else if (Eq(t->op, "openat")) {
-        Cleanup(gioop_openat(w, t, g));
+        _graph_insert(w, g, t->path, NULL);
 
     } else if (Eq(t->op, "creat")) {
-        Cleanup(gioop_creat(w, t, g));
+        _graph_insert(w, g, t->path, NULL);
     }
+
+    return ret;
 
     // Get the virtual file descriptor of a given real fd and store a pointer
     // to it to t->vfd.
     if (t->has_fd) {
         Cleanup_unless(SUCCESS, ret);
     }
-
 
     if (Eq(t->op, "close")) {
         Cleanup(gioop_close(w, t, g));
