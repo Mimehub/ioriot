@@ -15,6 +15,10 @@
 #ifndef OWRITER_H
 #define OWRITER_H
 
+#define Owriter_write(o, ...) \
+    long Offset = ftell(o->fd); \
+    fprintf(o->fd, ##__VA_ARGS__);
+
 /**
  * @brief The offset writer object definition
  *
@@ -35,6 +39,14 @@ typedef struct owriter_s_ {
 owriter_s* owriter_new(char *journal_path);
 
 /**
+ * @brief Creates a new owriter object from an already given fd
+ *
+ * @param fd The file descriptor
+ * @return The new owriter object
+ */
+owriter_s* owriter_new_from_fd(FILE *fd);
+
+/**
  * @brief Destroys a owriter object
  *
  * @param o The owriter object to destroy
@@ -45,9 +57,9 @@ void owriter_destroy(owriter_s* o);
  * @brief Write a line to the journal
  *
  * @param g The owriter object to write to
- * @param start The start offset writing to the journal
- * @return The amount of bytes written to the journal
+ * @param line The line to be written to the journal
+ * @return The byte offset where the line starts in the journal
  */
-int owriter_write(owriter_s* o, const char *line, off_t *start);
+off_t owriter_write(owriter_s* o, const char *line);
 
 #endif

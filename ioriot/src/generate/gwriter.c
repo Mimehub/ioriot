@@ -63,6 +63,7 @@ gwriter_s* gwriter_new(generate_s *g)
     w->generate = g;
     w->terminate = false;
     w->queue = rbuffer_new(1024);
+    w->owriter = owriter_new_from_fd(g->replay_fd);
 
     return w;
 }
@@ -75,6 +76,7 @@ void gwriter_start(gwriter_s *w)
 void gwriter_destroy(gwriter_s *w)
 {
     rbuffer_destroy(w->queue);
+    owriter_destroy(w->owriter);
     free(w);
 }
 

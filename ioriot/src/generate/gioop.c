@@ -14,10 +14,11 @@
 
 #include "gioop.h"
 
-static void _graph_insert(gwriter_s *w, generate_s *g, char *path, void *data)
+static void _graph_insert(gwriter_s *w, generate_s *g, char *path, long offset)
 {
     if (path)
-        graph_insert(g->graph, path, data);
+        graph_insert(g->graph, path, &offset);
+    Out("%ld\n", offset);
 }
 
 status_e gioop_run(gwriter_s *w, gtask_s *t)
@@ -34,13 +35,19 @@ status_e gioop_run(gwriter_s *w, gtask_s *t)
 
     // One of the open syscalls may openes a file handle succesfully
     if (Eq(t->op, "open")) {
-        _graph_insert(w, g, t->path, NULL);
+        Owriter_write(w->owriter, "%d|%s|%d|%d|open\n", OPEN, t->path, t->mode, t->flags);
+        _graph_insert(w, g, t->path, Offset);
+        Cleanup(t->ret);
 
     } else if (Eq(t->op, "openat")) {
-        _graph_insert(w, g, t->path, NULL);
+        Owriter_write(w->owriter, "%d|%s|%d|%d|openat\n", OPEN_AT, t->path, t->mode, t->flags);
+        _graph_insert(w, g, t->path, Offset);
+        Cleanup(t->ret);
 
     } else if (Eq(t->op, "creat")) {
-        _graph_insert(w, g, t->path, NULL);
+        Owriter_write(w->owriter, "%d|%s|%d|%d|creat\n", CREAT, t->path, t->mode, t->flags);
+        _graph_insert(w, g, t->path, Offset);
+        Cleanup(t->ret);
     }
 
     return ret;

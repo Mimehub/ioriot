@@ -17,6 +17,7 @@
 
 #include "../datas/rbuffer.h"
 #include "../defaults.h"
+#include "../journal/owriter.h"
 #include "gtask.h"
 #include "generate.h"
 
@@ -35,6 +36,7 @@ typedef struct gwriter_s_ {
     struct generate_s_ *generate; /**< The generate object */
     pthread_t pthread; /**< The posix thread */
     rbuffer_s *queue; /**< A queue of task objects */
+    owriter_s *owriter; /**< The journal offset writer */
 } gwriter_s;
 
 /**

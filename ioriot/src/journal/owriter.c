@@ -25,18 +25,27 @@ owriter_s* owriter_new(char *journal_path)
     return o;
 }
 
+owriter_s* owriter_new_from_fd(FILE *fd)
+{
+    owriter_s *o = Malloc(owriter_s);
+    o->journal_path = NULL;
+    o->fd = fd;
+    return o;
+}
+
 void owriter_destroy(owriter_s* o)
 {
-    Out("Closing '%s'", o->journal_path);
-    free(o->journal_path);
-    fclose(o->fd);
+    if (o->journal_path) {
+        Out("Closing '%s'", o->journal_path);
+        free(o->journal_path);
+        fclose(o->fd);
+    }
     free(o);
 }
 
-int owriter_write(owriter_s* o, const char *line, off_t *start)
+off_t owriter_write(owriter_s* o, const char *line)
 {
-    *start = fseek(o->fd, 0, SEEK_CUR);
-    int bytes = strlen(line) + 1;
-    fprintf(o->fd, "%s\n", line);
-    return bytes;
+    off_t start = fseek(o->fd, 0, SEEK_CUR);
+    fprintf(o->fd, "%s", line);
+    return start;
 }

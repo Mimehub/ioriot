@@ -23,6 +23,7 @@
 
 // Helper macro regarding writing the .replay file!
 
+/*
 #define Gioop_write(op, ...) \
     fprintf(g->replay_fd, "%ld|%ld|%ld|0|0|%d|", \
             t->mapped_time, \
@@ -32,6 +33,7 @@
     fprintf(g->replay_fd, __VA_ARGS__); \
     fprintf(g->replay_fd, "@%ld", t->lineno); \
     fprintf(g->replay_fd, "|\n")
+*/
 
 /**
  * @brief Function used when closing all virtual FDs of a virtual process
