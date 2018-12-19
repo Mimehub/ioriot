@@ -83,6 +83,17 @@ sudo ioriot -P # purges all test files created by ioriot
 sudo make uninstall
 ```
 
+# Compiling I/O Riot using Docker
+
+In case there is no suitable build host for I/O Riot it is possible to use Docker to do the job. In order to build everything for CentOS 7 and Linux Kernel 3.10.0-957.1.3.el7.x86_64 just run:
+
+```sh
+export KERNEL=3.10.0-957.1.3.el7.x86_64
+make dockerbuild
+```
+
+Once done you can distribute ``docker/$KERNEL/opt/ioriot`` to ``/opt/ioriot`` to all boxes with that particular running kernel.
+
 # Operating I/O Riot
 
 ## 1. Capture
