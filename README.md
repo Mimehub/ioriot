@@ -85,14 +85,16 @@ sudo make uninstall
 
 # Compiling I/O Riot using Docker
 
-In case there is no suitable build host for I/O Riot it is possible to use Docker to do the job. In order to build everything for CentOS 7 and Linux Kernel 3.10.0-957.1.3.el7.x86_64 just run:
+In case there is no suitable build host for I/O Riot (e.g. compiling on a Mac) it is possible to use Docker to do the job. In order to build everything for CentOS 7 and Linux Kernel 3.10.0-957.1.3.el7.x86_64 just run:
 
 ```sh
 export KERNEL=3.10.0-957.1.3.el7.x86_64
 make dockerbuild
 ```
 
-Once done you can distribute ``docker/$KERNEL/opt/ioriot`` to ``/opt/ioriot`` to all boxes with that particular running kernel.
+That will run for quite a while (depending on the download speed it can take more than 15 minutes!). Once done you can distribute ``/tmp/docker/opt/ioriot`` to ``/opt/ioriot`` to all boxes with that particular running kernel.
+
+By repeating the steps above it is possible to compile the SystemTap kernel modules for multiple Kernel versions. All the modules will be found seamlessly in ``/tmp/opt/ioriot/systemtap``.
 
 # Operating I/O Riot
 

@@ -23,4 +23,5 @@ test:
 dockerbuild:
 	sed s/KERNELVERSION/$(KERNEL)/ Dockerfile.in > Dockerfile
 	docker build . -t ioriot:$(KERNEL)
-	docker run -it ioriot:$(KERNEL) --entrypoint /bin/bash -c 'make'
+	bash -c 'test ! -d /tmp/docker/opt/ && mkdir -p /tmp/docker/opt/; exit 0'
+	docker run -v /tmp/docker/opt:/opt -it ioriot:$(KERNEL) make all install

@@ -1,11 +1,11 @@
 FROM centos:7
 
-RUN yum install -v -y gcc systemtap yum-utils
+RUN yum install -y gcc systemtap yum-utils
 ENV KERNEL KERNELVERSION
-RUN yum install -v -y kernel-${KERNEL}
-RUN debuginfo-install -v -y kernel-${KERNEL}
+RUN yum install -y kernel-${KERNEL} kernel-devel-${KERNEL}
+RUN debuginfo-install -y kernel-${KERNEL}
 
-ADD ./ /ioriot
 WORKDIR /ioriot
+ADD ./ /ioriot
+RUN mkdir -p /opt/ioriot
 VOLUME /opt
-
