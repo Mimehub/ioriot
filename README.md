@@ -55,7 +55,7 @@ I/O Riot consists of a set of SystemTap kernel modules (capturing I/O) and the t
 
 I/O Riot has been tested on
 
-* CentOS 7.4 64Bit (latest version, all packages up to date, booted into the installed Kernel)
+* CentOS 7.6 64Bit (latest version, all packages up to date, booted into the installed Kernel)
 * SystemTap (from the default CentOS repository)
 * GCC C-Compiler (from the default CentOS repository)
 
