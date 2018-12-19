@@ -80,7 +80,7 @@ probe timer.s(3600) {
 }
 
 probe begin {
-    printf("#|capture_version=%d|\n", 2);
+    printf("#|capture_version=%d|\n", 3);
 }
 
 probe syscall.open, syscall.openat {
