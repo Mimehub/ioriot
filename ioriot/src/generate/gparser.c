@@ -294,6 +294,9 @@ status_e gparser_extract_tok(gparser_s *p, gtask_s *t, char *tok)
     case 'T':
         break;
 
+    case 'D':
+        break;
+
     default:
         // Unknown key
     {
