@@ -1,11 +1,16 @@
 FROM centos:7
 
-RUN yum install -y gcc systemtap yum-utils
-ENV KERNEL KERNELVERSION
-RUN yum install -y kernel-${KERNEL} kernel-devel-${KERNEL}
-RUN debuginfo-install -y kernel-${KERNEL}
+RUN sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/CentOS-{Vault,Debuginfo}.repo
+RUN yum install -y gcc systemtap yum-utils wget
+ENV kernel KERNEL
+RUN yum install -y kernel-${kernel} kernel-devel-${kernel}
+RUN debuginfo-install -y kernel-${kernel}
 
 WORKDIR /ioriot
 ADD ./ /ioriot
+
+RUN mkdir -p /ioriot/systemtap/downloads
 RUN mkdir -p /opt/ioriot
+
 VOLUME /opt
+VOLUME /ioriot/systemtap/downloads
