@@ -47,11 +47,11 @@ This is also potentially a great tool just for analysing (not replaying) the I/O
 
 Future work will also include file hole support and I/O support for memory mapped files.
 
-# Installation
+# How to install I/O Riot
 
 I/O Riot depends on SystemTap and a compatible version of the Linux Kernel. To get started have a read through the [installation guide](docs/markdown/installation.md).
 
-# Operating I/O Riot
+# How to use I/O Riot
 
 Check out the [I/O Riot usage guide](docs/markdown/usage.md) for a full usage workflow demonstration.
 

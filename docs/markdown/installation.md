@@ -48,3 +48,5 @@ make dockerbuild
 That will run for quite a while (depending on the download speed it can take more than 15 minutes!). Afterwards distribute directory ``./docker/opt/ioriot`` to ``/opt/ioriot`` to all boxes with that particular running kernel version.
 
 By repeating the steps above it is possible to compile the SystemTap Kernel modules for multiple versions. All the modules will be found seamlessly in ``./docker/opt/ioriot/systemtap``.
+
+Docker build support has been tested on macOS X High Sierra and Docker Desktop CE Version 2.0.0.0-mac81 and will work very likely on all other systems with a Docker up and running.
