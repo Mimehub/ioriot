@@ -1,5 +1,6 @@
 KERNEL ?= $(shell uname -r)
 DESTDIR=/opt/ioriot
+PWD=$(shell pwd)
 all:
 	$(MAKE) -C systemtap
 	$(MAKE) -C ioriot
@@ -23,5 +24,5 @@ test:
 dockerbuild:
 	sed s/KERNEL/$(KERNEL)/ Dockerfile.in > Dockerfile
 	docker build . -t ioriot:$(KERNEL)
-	bash -c 'test ! -d /tmp/docker/opt/ && mkdir -p /tmp/docker/opt/; exit 0'
-	docker run -v /tmp/docker/opt:/opt -v /tmp/docker/downloads:/ioriot/systemtap/downloads -e 'KERNEL=$(KERNEL)' -it ioriot:$(KERNEL) make all install
+	bash -c 'test ! -d $(PWD)/docker/opt/ && mkdir -p $(PWD)/docker/opt/; exit 0'
+	docker run -v $(PWD)/docker/opt:/opt -e 'KERNEL=$(KERNEL)' -it ioriot:$(KERNEL) make all install

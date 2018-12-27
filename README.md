@@ -55,6 +55,7 @@ I/O Riot depends on SystemTap and a compatible version of the Linux Kernel. To g
 
 Check out the [I/O Riot usage guide](docs/markdown/usage.md) for a full usage workflow demonstration.
 
+# Appendix
 
 ## Supported file systems
 
