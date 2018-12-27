@@ -34,6 +34,7 @@
 #
 # Format keys:
 # t: Time
+# D: Duration
 # i: PID:TID (process and thread ID)
 # o: Operation name
 # O: Offset or owner/user UID
@@ -53,6 +54,8 @@
 # a: Address
 # A: Address 2
 #
+
+global PROBE_ENTRY_TIMES%[8096]
 
 # Return the full qualified version of path
 function absolute_path (path) {
@@ -77,14 +80,21 @@ probe timer.s(3600) {
 }
 
 probe begin {
-    printf("#|capture_version=%d|\n", 2);
+    printf("#|capture_version=%d|\n", 3);
+}
+
+probe syscall.open, syscall.openat {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
+    }
 }
 
 probe syscall.open.return, syscall.openat.return {
     if (execname() == "java") {
+        ns = gettimeofday_ns()
         pathname = user_string(@entry($filename))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,f=%d;:,m=%d;:,\n",
-                gettimeofday_ms(),
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,f=%d;:,m=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
@@ -92,13 +102,21 @@ probe syscall.open.return, syscall.openat.return {
                 absolute_path(pathname),
                 @entry($flags),
                 @entry($mode));
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.lseek {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.lseek.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,O=%d;:,W=%d;:,b=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,O=%d;:,W=%d;:,b=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
@@ -106,13 +124,21 @@ probe syscall.lseek.return {
                 @entry($offset),
                 @entry($whence),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.llseek {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.llseek.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,O=%d;:,W=%d;:,b=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,O=%d;:,W=%d;:,b=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
@@ -120,13 +146,21 @@ probe syscall.llseek.return {
                 (@entry($offset_high) << 32 | @entry($offset_low)),
                 @entry($whence),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.fcntl {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.fcntl.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,F=%d;:,G=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,F=%d;:,G=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
@@ -134,53 +168,85 @@ probe syscall.fcntl.return {
                 @entry($cmd),
                 @entry($arg),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.creat {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.creat.return {
     if (execname() == "java") {
         pathname = user_string(@entry($pathname))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,m=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,m=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 $return,
                 absolute_path(pathname),
                 @entry($mode));
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.write, syscall.writev {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.write.return, syscall.writev.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,b=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,b=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 @entry($fd),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.unlink {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.unlink.return {
     if(execname() == "java") {
         pathname = user_string(@entry($pathname))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 absolute_path(pathname),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.unlinkat {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.unlinkat.return {
     if(execname() == "java") {
         pathname = user_string(@entry($pathname))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,f=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,f=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
@@ -188,6 +254,13 @@ probe syscall.unlinkat.return {
                 absolute_path(pathname),
                 @entry($flag),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.rename, syscall.renameat, syscall.renameat2 {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
@@ -195,33 +268,50 @@ probe syscall.rename.return, syscall.renameat.return, syscall.renameat2.return {
     if(execname() == "java") {
         oldname = user_string(@entry($oldname))
         newname = user_string(@entry($newname))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,P=%s;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,p=%s;:,P=%s;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 absolute_path(oldname),
                 absolute_path(newname),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.read, syscall.readv {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.read.return, syscall.readv.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,b=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,b=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 @entry($fd),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.readahead {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.readahead.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,b=%ld;:,O=%ld;:,c=%ld\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,b=%ld;:,O=%ld;:,c=%ld\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
@@ -229,63 +319,103 @@ probe syscall.readahead.return {
                 $return,
                 @entry($offset),
                 @entry($count));
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.readdir {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.readdir.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 @entry($fd),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.readlink {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.readlink.return {
     if(execname() == "java") {
         pathname = user_string(@entry($path))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 absolute_path(pathname),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.readlinkat {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.readlinkat.return {
     if(execname() == "java") {
         pathname = user_string(@entry($pathname))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 absolute_path(pathname),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.fdatasync, syscall.fsync {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.fdatasync.return, syscall.fsync.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 @entry($fd),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.sync_file_range {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.sync_file_range.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,O=%ld;:,b=%ld;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,O=%ld;:,b=%ld;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
@@ -293,89 +423,145 @@ probe syscall.sync_file_range.return {
                 @entry($offset),
                 @entry($nbytes),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.sync {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.sync.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.syncfs {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.syncfs.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 @entry($fd),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.close {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.close.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 @entry($fd),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.getdents {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.getdents.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,c=%d;:,b=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,c=%d;:,b=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 @entry($fd),
                 @entry($count),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.mkdir {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.mkdir.return {
     if(execname() == "java") {
         pathname = user_string(@entry($pathname))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,m=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,p=%s;:,m=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 absolute_path(pathname),
                 @entry($mode),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.rmdir {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.rmdir.return {
     if(execname() == "java") {
         pathname = user_string(@entry($pathname))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 absolute_path(pathname),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.mkdirat {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.mkdirat.return {
     if(execname() == "java") {
         pathname = user_string(@entry($pathname))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,m=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,p=%s;:,m=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
@@ -383,77 +569,125 @@ probe syscall.mkdirat.return {
                 absolute_path(pathname),
                 @entry($mode),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.stat {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.stat.return {
     if(execname() == "java") {
         pathname = user_string(@entry($filename))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 absolute_path(pathname),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.statfs, syscall.statfs64 {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.statfs.return, syscall.statfs64.return {
     if(execname() == "java") {
         pathname = user_string(@entry($pathname))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 absolute_path(pathname),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.fstatfs, syscall.fstatfs64 {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.fstatfs.return, syscall.fstatfs64.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 @entry($fd),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.lstat {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.lstat.return {
     if(execname() == "java") {
         pathname = user_string(@entry($filename))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,p=%s;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 absolute_path(pathname),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.fstat {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.fstat.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 @entry($fd),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.fstatat {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.fstatat.return {
     if(execname() == "java") {
         pathname = user_string(@entry($filename))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%ld;:,p=%s;:,f=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%ld;:,p=%s;:,f=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
@@ -461,33 +695,57 @@ probe syscall.fstatat.return {
                 absolute_path(pathname),
                 @entry($flag),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.chmod, syscall.fchmodat {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.chmod.return, syscall.fchmodat.return {
     if(execname() == "java") {
         pathname = user_string(@entry($filename))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,m=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,p=%s;:,m=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 absolute_path(pathname),
                 @entry($mode),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.fchmod {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.fchmod.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%d;:,m=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%d;:,m=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 @entry($fd),
                 @entry($mode),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.chown, syscall.chown16,
+      syscall.lchown, syscall.lchown16 {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
@@ -495,8 +753,9 @@ probe syscall.chown.return, syscall.chown16.return,
       syscall.lchown.return, syscall.lchown16.return {
     if(execname() == "java") {
         pathname = user_string(@entry($filename))
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,O=%d;:,G=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,p=%s;:,O=%d;:,G=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
@@ -504,13 +763,21 @@ probe syscall.chown.return, syscall.chown16.return,
                 @entry($user),
                 @entry($group),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.fchown, syscall.fchown16 {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.fchown.return, syscall.fchown16.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,d=%ld;:,O=%d;:,G=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,d=%ld;:,O=%d;:,G=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
@@ -518,14 +785,22 @@ probe syscall.fchown.return, syscall.fchown16.return {
                 @entry($user),
                 @entry($group),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.fchownat {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.fchownat.return {
     pathname = user_string(@entry($filename))
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,p=%s;:,O=%d;:,G=%d;:,f=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,p=%s;:,O=%d;:,G=%d;:,f=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
@@ -534,13 +809,21 @@ probe syscall.fchownat.return {
                 @entry($group),
                 @entry($flag),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.mmap2 {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.mmap2.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,a=%ld;:,b=%ld;:,m=%d;:,f=%d;:,d=%d;:,O=%ld;:,A=%ld;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,a=%ld;:,b=%ld;:,m=%d;:,f=%d;:,d=%d;:,O=%ld;:,A=%ld;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
@@ -551,13 +834,21 @@ probe syscall.mmap2.return {
                 @entry($fd),
                 @entry($pgoff),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.mremap {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.mremap.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,a=%ld;:,A=%ld;:,b=%ld;:,f=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,a=%ld;:,A=%ld;:,b=%ld;:,f=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
@@ -566,26 +857,42 @@ probe syscall.mremap.return {
                 @entry($new_len),
                 @entry($flags),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.munmap {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.munmap.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,a=%ld;:,b=%ld;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,a=%ld;:,b=%ld;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
                 @entry($addr),
                 @entry($len),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+probe syscall.msync {
+    if (execname() == "java") {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
     }
 }
 
 probe syscall.msync.return {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,a=%ld;:,b=%ld;:,f=%d;:,s=%d;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,a=%ld;:,b=%ld;:,f=%d;:,s=%d;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name,
@@ -593,16 +900,19 @@ probe syscall.msync.return {
                 @entry($len),
                 @entry($flags),
                 $return);
+        delete PROBE_ENTRY_TIMES[tid(),name]
     }
 }
 
 probe syscall.exit_group {
     if(execname() == "java") {
-        printf("t=%d;:,i=%d:%d;:,o=%s;:,\n",
-                gettimeofday_ms(),
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
                 pid(),
                 tid(),
                 name);
+        delete PROBE_ENTRY_TIMES[tid(),name]
     }
 }
 
