@@ -246,17 +246,17 @@ void _amap_test(amap_s *a)
 
 void amap_test(void)
 {
-    // First test the non-mmapped version
+    Put("amap: First test the non-mmapped version");
     amap_s* a = amap_new(1024*1024*10);
     _amap_test(a);
     amap_destroy(a);
 
-    // Now test the mapped version
+    Put("amap: Now test the mapped version");
     a = amap_new_mmapped(1024*1024*10);
     _amap_test(a);
     amap_destroy(a);
 
-    // Another test with non-alligned size
+    Put("amap: Another test with non-alligned size");
     a = amap_new(1024*1024*10+1);
     _amap_test(a);
     amap_destroy(a);

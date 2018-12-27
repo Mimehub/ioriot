@@ -7,10 +7,8 @@ all: compile
 prepare:
 	sed 's/execname() != "stapio"/pid() == target()/' ./src/ioriot.stp > ./src/targetedioriot.stp
 	sed 's/execname() != "stapio"/execname() == "java"/' ./src/ioriot.stp > ./src/javaioriot.stp
-	sed 's/execname() != "stapio"/pid() == target()/' ./src/traceio.stp > ./src/targetedtraceio.stp
-	sed 's/execname() != "stapio"/execname() == "java"/' ./src/traceio.stp > ./src/javatraceio.stp
-compile: prepare
-	@echo Crosscompiling for Kernel version $(KERNEL)
+compile:
+	@echo Compiling for Kernel version $(KERNEL)
 	for stp in ioriot javaioriot targetedioriot; do \
 		stap -v ./src/$$stp.stp -p 4 -r $(KERNEL) -m $$stp \
 		-D MAXSTRINGLEN=255 -D MAXACTION=10000 -D MAXSKIPPED=10000\
