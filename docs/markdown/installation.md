@@ -51,5 +51,5 @@ Keep in mind that ther Kernel version must be a valid kernel version of CentOS 7
 
 The above command will fetch a CentOS 7 base image and will install all for the build required packages. Depending on the network speed the whole procedure can take quite a while. I/O Riot will be compiled via Docker to directory ``./docker/opt/ioriot``. That directory can be distributed to ``/opt/ioriot`` to all boxes with that particular running kernel version.
 
-By repeating the steps above (setting KERNEL environment variable and running ``make dockerbuild``) it is possible to compile the SystemTap Kernel modules for multiple Kernel versions. All the modules will be found seamlessly in ``./docker/opt/ioriot``.
+By repeating the steps above (setting KERNEL environment variable and invoking ``make dockerbuild``) it is possible to compile the SystemTap Kernel modules for multiple Kernel versions. All the modules will be found seamlessly in ``./docker/opt/ioriot``.
 
