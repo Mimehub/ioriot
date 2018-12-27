@@ -22,9 +22,12 @@ doxygen:
 test:
 	$(MAKE) -C ioriot test
 dockerbuild:
+	bash -c 'test ! -d $(PWD)/docker/opt/ && mkdir -p $(PWD)/docker/opt/; exit 0'
+	bash -c 'test -f /etc/fedora-release && sudo chcon -Rt svirt_sandbox_file_t $(PWD)/docker/opt; exit 0'
+	bash -c 'test -f /etc/centos-release && sudo chcon -Rt svirt_sandbox_file_t $(PWD)/docker/opt; exit 0'
+	bash -c 'test -f /etc/redhat-release && sudo chcon -Rt svirt_sandbox_file_t $(PWD)/docker/opt; exit 0'
 	sed s/KERNEL/$(KERNEL)/ Dockerfile.in > Dockerfile
 	docker build . -t ioriot:$(KERNEL)
-	bash -c 'test ! -d $(PWD)/docker/opt/ && mkdir -p $(PWD)/docker/opt/; exit 0'
 	docker run -v $(PWD)/docker/opt:/opt -e 'KERNEL=$(KERNEL)' -it ioriot:$(KERNEL) make all test install
 dockerclean:
 	bash -c 'test -d $(PWD)/docker && rm -Rfv $(PWD)/docker; exit 0'
