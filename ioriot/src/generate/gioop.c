@@ -14,6 +14,14 @@
 
 #include "gioop.h"
 
+#define _Require_path \
+    if (t->path == NULL) { return ERROR; }
+
+#define _Require_path_from_fd \
+    if (!t->has_fd) { return ERROR; } \
+    char *_Path = hmap_get(g->fd_map, t->fdid); \
+    if (!_Path) { return ERROR; }
+
 static void _graph_insert(gwriter_s *w, generate_s *g, char *path, long offset)
 {
     if (path)
@@ -24,6 +32,7 @@ static void _graph_insert(gwriter_s *w, generate_s *g, char *path, long offset)
 status_e gioop_run(gwriter_s *w, gtask_s *t)
 {
     status_e ret = SUCCESS;
+    generate_s *g = w->generate;
 
     // There was already an error in the parser (parser.c) processing this
     // task! Don't process it futher.
@@ -31,9 +40,6 @@ status_e gioop_run(gwriter_s *w, gtask_s *t)
         Cleanup(t->ret);
     }
 
-    generate_s *g = w->generate;
-
-    // One of the open syscalls may openes a file handle succesfully
     if (Eq(t->op, "open")) {
         Cleanup(gioop_open(w, t, g));
 
@@ -42,15 +48,8 @@ status_e gioop_run(gwriter_s *w, gtask_s *t)
 
     } else if (Eq(t->op, "creat")) {
         Cleanup(gioop_creat(w, t, g));
-    }
 
-    return ret;
-
-    if (t->has_fd) {
-        Cleanup_unless(SUCCESS, ret);
-    }
-
-    if (Eq(t->op, "close")) {
+    } else if (Eq(t->op, "close")) {
         Cleanup(gioop_close(w, t, g));
 
     } else if (Eq(t->op, "stat")) {
@@ -198,7 +197,7 @@ status_e gioop_run(gwriter_s *w, gtask_s *t)
         Cleanup(gioop_exit_group(w, t, g));
 
     } else {
-        Cleanup(ERROR;);
+        Cleanup(ERROR);
     }
 
 cleanup:
@@ -212,559 +211,381 @@ cleanup:
     return ret;
 }
 
-status_e gioop_open(gwriter_s *w, gtask_s *t, generate_s *g)
-{
+static status_e _gioop_open(gwriter_s *w, gtask_s *t, generate_s *g, char *str, int code) {
     if (!t->has_fd || t->path == NULL || t->flags == -1) {
         return ERROR;
     }
 
-    Owriter_write(w->owriter, "%d|%s|%s|%d|%d|open\n", OPEN, t->fdid, t->path, t->mode, t->flags);
+    // Notify that process has a specific file descriptor open
+    char *path = hmap_replace(g->fd_map, t->fdid, Clone(t->path));
+    if (path) {
+        // In case that the process already had the same fd open inject a close
+        Owriter_write(w->owriter, "%d|%s|%s\n", CLOSE, t->fdid, "injected close");
+        _graph_insert(w, g, t->path, Offset);
+        free(path);
+    }
+
+    Owriter_write(w->owriter, "%d|%s|%s|%d|%d|%s\n", code, t->fdid, t->path, t->mode, t->flags, str);
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
+}
+
+status_e gioop_open(gwriter_s *w, gtask_s *t, generate_s *g)
+{
+    return _gioop_open(w, t, g, "open", OPEN);
 }
 
 status_e gioop_openat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    if (!t->has_fd || t->path == NULL || t->flags == -1) {
-        return ERROR;
-    }
-
-    Owriter_write(w->owriter, "%d|%s|%s|%d|%d|openat\n", OPEN_AT, t->fdid, t->path, t->mode, t->flags);
-    _graph_insert(w, g, t->path, Offset);
-
-    return SUCCESS;
+    return _gioop_open(w, t, g, "openat", OPEN_AT);
 }
 
 status_e gioop_creat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    if (!t->has_fd || t->path == NULL || t->flags == -1) {
-        return ERROR;
-    }
-
-    Owriter_write(w->owriter, "%d|%s|%s|%d|%d|creat\n", CREAT, t->fdid, t->path, t->mode, t->flags);
-    _graph_insert(w, g, t->path, Offset);
-
-    return SUCCESS;
+    return _gioop_open(w, t, g, "creat", CREAT);
 }
 
 status_e gioop_close(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
     if (!t->has_fd) {
         return ERROR;
     }
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(CLOSE, "%ld|%d|close", t->mapped_fd, t->status);
+    char *path = hmap_remove(g->fd_map, t->fdid);
 
-    if (t->status == 0)
-        vsize_close(t->vsize, t->vfd);
+    if (!path) {
+        // Not closing, as there was no such fd open
+        return ERROR;
+    }
 
-    hmap_remove_l(t->gprocess->fd_map, t->fd);
-    hmap_remove_l(t->gprocess->vfd_map, t->mapped_fd);
+    Owriter_write(w->owriter, "%d|%s|%s\n", CLOSE, t->fdid, "close");
+    _graph_insert(w, g, path, Offset);
 
-    if (!(rbuffer_insert(g->vfd_buffer, t->vfd)))
-        vfd_destroy(t->vfd);
-        */
+    return SUCCESS;
+}
+
+static status_e _gioop_stat(gwriter_s *w, gtask_s *t, generate_s *g, char *str, int code)
+{
+    if (t->path == NULL) {
+        return ERROR;
+    }
+
+    Owriter_write(w->owriter, "%d|%s|%d|%s\n", code, t->path, t->status, str);
+    _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
 }
 
 status_e gioop_stat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL) {
-        return ERROR;
-    }
-
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(STAT, "%s|%d|stat", t->path, t->status);
-
-    if (t->status == 0)
-        vsize_stat(t->vsize, t->path);
-*/
-    return SUCCESS;
+    return _gioop_stat(w, t, g, "stat", STAT);
 }
 
 status_e gioop_statfs(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL) {
-        return ERROR;
-    }
-
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(STATFS, "%s|%d|statfs", t->path, t->status);
-
-    if (t->status == 0)
-        vsize_stat(t->vsize, t->path);
-*/
-    return SUCCESS;
+    return _gioop_stat(w, t, g, "statfs", STATFS);
 }
 
 status_e gioop_statfs64(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL) {
-        return ERROR;
-    }
+    return _gioop_stat(w, t, g, "statfs64", STATFS64);
+}
 
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(STATFS64, "%s|%d|statfs64", t->path, t->status);
+static status_e _gioop_fstat(gwriter_s *w, gtask_s *t, generate_s *g, char *str, int code) {
+    _Require_path_from_fd;
 
-    if (t->status == 0)
-        vsize_stat(t->vsize, t->path);
-*/
+    Owriter_write(w->owriter, "%d|%s|%d|%s\n", code, t->fdid, t->status, str);
+    _graph_insert(w, g, _Path, Offset);
+
     return SUCCESS;
 }
 
 status_e gioop_fstat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
-
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(FSTAT, "%ld|%d|fstat", t->mapped_fd, t->status);
-*/
-    return SUCCESS;
+    return _gioop_fstat(w, t, g, "fstat", FSTAT);
 }
 
 status_e gioop_fstatat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL) {
-        return ERROR;
-    }
-
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(FSTAT_AT, "%s|%d|fstatat", t->path, t->status);
-
-    if (t->status == 0)
-        vsize_stat(t->vsize, t->path);
-*/
-    return SUCCESS;
+    return _gioop_stat(w, t, g, "fstatat", FSTAT_AT);
 }
 
 status_e gioop_fstatfs(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
-
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(FSTATFS, "%ld|%d|fstatfs", t->mapped_fd, t->status);
-*/
-    return SUCCESS;
+    return _gioop_fstat(w, t, g, "fstatfs", FSTATFS);
 }
 
 status_e gioop_fstatfs64(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
+    return _gioop_fstat(w, t, g, "fstatfs64", FSTATFS64);
+}
+
+static status_e _gioop_rename(gwriter_s *w, gtask_s *t, generate_s *g, char *str, int code) {
+    if (t->path == NULL || t->path2 == NULL ) {
         return ERROR;
     }
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(FSTATFS64, "%ld|%d|fstatfs64", t->mapped_fd, t->status);
-*/
+    Owriter_write(w->owriter, "%d|%s|%s|%s\n", code, t->path, t->path2, str);
+    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, g, t->path2, Offset);
+
     return SUCCESS;
 }
 
 status_e gioop_rename(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL || t->path2 == NULL ) {
-        return ERROR;
-    }
-
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(RENAME, "%s|%s|%d|rename", t->path, t->path2, t->status);
-
-    if (t->status == 0) {
-        t->vsize2 = generate_vsize_by_path(g, NULL, t->path2);
-        vsize_rename(t->vsize, t->vsize2, t->path, t->path2);
-    }
-*/
-    return SUCCESS;
+    return _gioop_rename(w, t, g, "rename", RENAME);
 }
 
 status_e gioop_renameat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL || t->path2 == NULL ) {
-        return ERROR;
-    }
-
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(RENAME_AT, "%s|%s|%d|renameat", t->path, t->path2, t->status);
-
-    if (t->status == 0) {
-        t->vsize2 = generate_vsize_by_path(g, NULL, t->path2);
-        vsize_rename(t->vsize, t->vsize2, t->path, t->path2);
-    }
-*/
-    return SUCCESS;
+    return _gioop_rename(w, t, g, "renameat", RENAME_AT);
 }
 status_e gioop_renameat2(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL || t->path2 == NULL ) {
-        return ERROR;
-    }
-
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(RENAME_AT2, "%s|%s|%d|renameat2",
-                t->path, t->path2, t->status);
-
-    if (t->status == 0) {
-        t->vsize2 = generate_vsize_by_path(g, NULL, t->path2);
-        vsize_rename(t->vsize, t->vsize2, t->path, t->path2);
-    }
-*/
-    return SUCCESS;
+    return _gioop_rename(w, t, g, "renameat2", RENAME_AT2);
 }
 
 status_e gioop_read(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(READ, "%ld|%ld|read", t->mapped_fd, t->bytes);
+    Owriter_write(w->owriter, "%d|%s|%s\n", CLOSE, t->fdid, "close");
+    _graph_insert(w, g, _Path, Offset);
 
-    if (t->bytes > 0)
-        vsize_read(t->vsize, t->vfd, t->vfd->path, t->bytes);
-*/
     return SUCCESS;
 }
 
 status_e gioop_readv(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(READ, "%ld|%ld|readv", t->mapped_fd, t->bytes);
-
-    if (t->bytes > 0)
-        vsize_read(t->vsize, t->vfd, t->vfd->path, t->bytes);
-*/
+    Owriter_write(w->owriter, "%d|%s|%s\n", READ, t->fdid, "readv");
+    _graph_insert(w, g, _Path, Offset);
 
     return SUCCESS;
 }
 
 status_e gioop_readahead(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(READAHEAD, "%ld|%ld|%ld|readahead",
-                t->mapped_fd, t->offset, t->count);
-*/
+    Owriter_write(w->owriter, "%d|%s|%ld|%ld|%s\n", READAHEAD, t->fdid, t->offset, t->count, "readahead");
+    _graph_insert(w, g, _Path, Offset);
+
     return SUCCESS;
 }
 
 status_e gioop_readdir(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(READDIR, "%ld|%d|readdir", t->mapped_fd, t->status);
-*/
+    Owriter_write(w->owriter, "%d|%s|%d|%s\n", READDIR, t->fdid, t->status, "readdir");
+    _graph_insert(w, g, _Path, Offset);
+
     return SUCCESS;
 }
 
 status_e gioop_readlink(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL) {
-        return ERROR;
-    }
+    _Require_path;
 
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(READLINK, "%s|%d|readlink", t->path, t->status);
+    Owriter_write(w->owriter, "%d|%s|%d|%s\n",
+            READLINK, t->path, t->status, "readlink");
+    _graph_insert(w, g, t->path, Offset);
 
-    if (t->status == 0)
-        vsize_stat(t->vsize, t->path);
-*/
     return SUCCESS;
 }
 
 status_e gioop_readlinkat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL) {
-        return ERROR;
-    }
+    _Require_path;
 
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(READLINK_AT, "%s|%d|readlinkat", t->path, t->status);
+    Owriter_write(w->owriter, "%d|%s|%d|%s\n",
+            READLINK_AT, t->path, t->status, "readlinkat");
+    _graph_insert(w, g, t->path, Offset);
 
-    if (t->status == 0)
-        vsize_stat(t->vsize, t->path);
-*/
     return SUCCESS;
 }
 
 status_e gioop_write(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(WRITE, "%ld|%ld|write", t->mapped_fd, t->bytes);
+    Owriter_write(w->owriter, "%d|%s|%ld|write",
+            WRITE, t->fdid, t->bytes);
+    _graph_insert(w, g, _Path, Offset);
 
-    if (t->bytes > 0)
-        vsize_write(t->vsize, t->vfd, t->path, t->bytes);
-*/
     return SUCCESS;
 }
 
 status_e gioop_writev(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(WRITEV, "%ld|%ld|writev", t->mapped_fd, t->bytes);
+    Owriter_write(w->owriter, "%d|%s|%ld|writev",
+            WRITEV, t->fdid, t->bytes);
+    _graph_insert(w, g, _Path, Offset);
 
-    if (t->bytes > 0)
-        vsize_write(t->vsize, t->vfd, t->path, t->bytes);
-*/
     return SUCCESS;
 }
 
 status_e gioop_lseek(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(LSEEK, "%ld|%ld|%ld|%ld|lseek",
-                t->mapped_fd, t->offset, t->whence, t->bytes);
+    Owriter_write(w->owriter, "%d|%s|%ld|%ld|%ld|lseek",
+                  LSEEK, t->fdid, t->offset, t->whence, t->bytes);
+    _graph_insert(w, g, _Path, Offset);
 
-    if (t->bytes >= 0)
-        vsize_seek(t->vsize, t->vfd, t->bytes);
-*/
     return SUCCESS;
 }
 
 status_e gioop_llseek(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(LLSEEK, "%ld|%ld|%ld|%ld|llseek",
-                t->mapped_fd, t->offset, t->whence, t->bytes);
+    Owriter_write(w->owriter, "%d|%s|%ld|%ld|%ld|llseek",
+                LLSEEK, t->fdid, t->offset, t->whence, t->bytes);
+    _graph_insert(w, g, _Path, Offset);
 
-    if (t->bytes >= 0)
-        vsize_seek(t->vsize, t->vfd, t->bytes);
-*/
     return SUCCESS;
 }
 
 status_e gioop_getdents(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(GETDENTS, "%ld|%ld|%ld|getdents",
-                t->mapped_fd, t->count, t->bytes);
-*/
+    Owriter_write(w->owriter, "%d|%s|%ld|%ld|getdents",
+                GETDENTS, t->fdid, t->count, t->bytes);
+    _graph_insert(w, g, _Path, Offset);
+
     return SUCCESS;
 }
 
 status_e gioop_mkdir(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL) {
-        return ERROR;
-    }
+    _Require_path;
 
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(MKDIR, "%s|%d|%d|mkdir", t->path, t->mode, t->status);
+    Owriter_write(w->owriter, "%d|%s|%d|%d|mkdir",
+            MKDIR, t->path, t->mode, t->status);
+    _graph_insert(w, g, t->path, Offset);
 
-    if (t->status == 0)
-        vsize_mkdir(t->vsize, t->path);
-*/
     return SUCCESS;
 }
+
 status_e gioop_rmdir(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL) {
-        return ERROR;
-    }
+    _Require_path;
 
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(MKDIR, "%s|%d|rmdir", t->path, t->status);
+    Owriter_write(w->owriter, "%d|%s|%d|rmdir",
+            RMDIR, t->path, t->status);
+    _graph_insert(w, g, t->path, Offset);
 
-    if (t->status == 0)
-        vsize_rmdir(t->vsize, t->path);
-*/
     return SUCCESS;
 }
 
 status_e gioop_mkdirat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL) {
-        return ERROR;
-    }
+    _Require_path;
 
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(MKDIR_AT, "%s|%d|%d|mkdirat", t->path, t->mode, t->status);
+    Owriter_write(w->owriter, "%d|%s|%d|%d|mkdirat", 
+            MKDIR_AT, t->path, t->mode, t->status);
+    _graph_insert(w, g, t->path, Offset);
 
-    if (t->status == 0)
-        vsize_mkdir(t->vsize, t->path);
-*/
     return SUCCESS;
 }
 
 status_e gioop_unlink(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL) {
-        return ERROR;
-    }
+    _Require_path;
 
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(UNLINK, "%s|%d|unlink", t->path, t->status);
-
-    if (t->status == 0)
-        vsize_unlink(t->vsize, t->path);
-*/
+    Owriter_write(w->owriter, "%d|%s|%d|unlink",
+            UNLINK, t->path, t->status);
+    _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
 }
 
 status_e gioop_unlinkat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL) {
-        return ERROR;
-    }
+    _Require_path;
 
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(UNLINK_AT, "%s|%d|unlinkat", t->path, t->status);
-
-    if (t->status == 0)
-        vsize_unlink(t->vsize, t->path);
-        */
+    Owriter_write(w->owriter, "%d|%s|%d|unlinkat",
+            UNLINK_AT, t->path, t->status);
+    _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
 }
 
 status_e gioop_lstat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL) {
-        return ERROR;
-    }
+    _Require_path;
 
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(LSTAT, "%s|%d|lstat", t->path, t->status);
-
-    if (t->status == 0)
-        vsize_stat(t->vsize, t->path);
-        */
+    Owriter_write(w->owriter, "%d|%s|%d|lstat", 
+            LSTAT, t->path, t->status);
+    _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
 }
 
 status_e gioop_fsync(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(FSYNC, "%ld|%d|fsync", t->mapped_fd, t->status);
-*/
+    Owriter_write(w->owriter, "%d|%s|%d|fsync", 
+            FSYNC, t->fdid, t->status);
+    _graph_insert(w, g, t->path, Offset);
+
     return SUCCESS;
 }
 
 status_e gioop_fdatasync(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(FDATASYNC, "%ld|%d|fdatasync", t->mapped_fd, t->status);
-*/
+    Owriter_write(w->owriter, "%d|%s|%d|fdatasync",
+            FDATASYNC, t->fdid, t->status);
+    _graph_insert(w, g, t->path, Offset);
+
     return SUCCESS;
 }
 
 status_e gioop_sync(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    Gioop_write(SYNC, "%d|sync", t->status);
-*/
+    Owriter_write(w->owriter, "%d|%d|sync", SYNC,  t->status);
+    // TODO: Use last known existent path for global fsync
+    _graph_insert(w, g, "%d|/", Offset);
+
     return SUCCESS;
 }
 
 status_e gioop_syncfs(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(SYNCFS, "%ld|%d|syncfs", t->mapped_fd, t->status);
-*/
+    Owriter_write(w->owriter, "%d|%s|%d|syncfs",
+            SYNCFS, t->fdid, t->status);
+    _graph_insert(w, g, _Path, Offset);
+
     return SUCCESS;
 }
 
 status_e gioop_sync_file_range(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(SYNC_FILE_RANGE, "%ld|%ld|%ld|%d|sync_file_range",
-                t->mapped_fd, t->offset, t->bytes, t->status);
-*/
+    Owriter_write(w->owriter, "%d|%s|%ld|%ld|%d|sync_file_range",
+                SYNC_FILE_RANGE, t->fdid, t->offset, t->bytes, t->status);
+    _graph_insert(w, g, _Path, Offset);
+
     return SUCCESS;
 }
 
 status_e gioop_fcntl(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
     switch (t->F) {
     case F_GETFD:
@@ -777,115 +598,88 @@ status_e gioop_fcntl(gwriter_s *w, gtask_s *t, generate_s *g)
         break;
     }
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(FCNTL, "%ld|%d|%d|%d|fcntl",
-                t->mapped_fd, t->F, t->G, t->status);
-*/
+    Owriter_write(w->owriter, "%d|%s|%d|%d|%d|fcntl",
+                FCNTL, t->fdid, t->F, t->G, t->status);
+    _graph_insert(w, g, _Path, Offset);
+
     return SUCCESS;
 }
 
 status_e gioop_chmod(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL) {
-        return ERROR;
-    }
+    _Require_path;
 
-    generate_vsize_by_path(g, t, NULL);
-    Gioop_write(CHMOD, "%s|%d|%d|chmod", t->path, t->mode, t->status);
-
-    if (t->status == 0)
-        vsize_stat(t->vsize, t->path);
-        */
+    Owriter_write(w->owriter, "%d|%s|%d|%d|chmod",
+            CHMOD, t->path, t->mode, t->status);
+    _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
 }
 
 status_e gioop_fchmod(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(FCHMOD, "%ld|%d|%d|fchmod", t->mapped_fd, t->mode, t->status);
-*/
+    Owriter_write(w->owriter, "%d|%s|%d|%d|fchmod",
+            FCHMOD, t->fdid, t->mode, t->status);
+    _graph_insert(w, g, _Path, Offset);
+
     return SUCCESS;
 }
 
 status_e gioop_chown(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL) {
-        return ERROR;
-    }
+    _Require_path;
 
-    generate_vsize_by_path(g, t, NULL);
     // Hmm, maybe rename t->offset, because here it is used for the user UID
-    Gioop_write(CHOWN, "%s|%ld|%d|%d|chown", t->path, t->offset, t->G, t->status);
+    Owriter_write(w->owriter, "%d|%s|%ld|%d|%d|chown",
+            CHOWN, t->path, t->offset, t->G, t->status);
+    _graph_insert(w, g, t->path, Offset);
 
-    if (t->status == 0)
-        vsize_stat(t->vsize, t->path);
-*/
     return SUCCESS;
 }
 
 status_e gioop_fchown(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (!t->has_fd) {
-        return ERROR;
-    }
+    _Require_path_from_fd;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
     // Hmm, maybe rename t->offset, because here it is used for the user UID
-    Gioop_write(FCHOWN, "%ld|%ld|%d|%d|fchown", t->mapped_fd, t->offset, t->G, t->status);
-*/
+    Owriter_write(w->owriter, "%d|%s|%ld|%d|%d|fchown",
+            FCHOWN, t->fdid, t->offset, t->G, t->status);
+    _graph_insert(w, g, _Path, Offset);
+
     return SUCCESS;
 }
 
 status_e gioop_lchown(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    if (t->path == NULL) {
-        return ERROR;
-    }
+    _Require_path;
 
-    generate_vsize_by_path(g, t, NULL);
     // Hmm, maybe rename t->offset, because here it is used for the user UID
-    Gioop_write(LCHOWN, "%s|%ld|%d|%d|chown", t->path, t->offset, t->G, t->status);
+    Owriter_write(w->owriter, "%d|%s|%ld|%d|%d|chown",
+            LCHOWN, t->path, t->offset, t->G, t->status);
+    _graph_insert(w, g, t->path, Offset);
 
-    if (t->status == 0)
-        vsize_stat(t->vsize, t->path);
-*/
     return SUCCESS;
 }
 
 status_e gioop_exit_group(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
     // It means that the process and all its threads terminate.
     // Therefore close all file handles of that process!
-    hmap_run_cb2(t->gprocess->vfd_map, gioop_close_all_vfd_cb, t);
-
-    // Remove virtual process from pid map and destroy it
-    gprocess_destroy(t->gprocess);
-    */
+    hmap_run_cb2(g->fd_map, gioop_close_all_fd_cb, t);
 
     return SUCCESS;
 }
 
-void gioop_close_all_vfd_cb(void *data, void *data2)
+void gioop_close_all_fd_cb(void *data, void *data2)
 {
     /*
     gtask_s *t = data2;
     t->vfd = data;
     generate_s *g = t->generate;
 
-    generate_vsize_by_path(g, t, t->vfd->path);
-    Gioop_write(CLOSE, "%ld|%d|close on exit_group", t->vfd->mapped_fd, 0);
-    vsize_close(t->vsize, t->vfd);
+    Owriter_write(w->owriter, CLOSE, "%ld|%d|close on exit_group", t->vfd->mapped_fd, 0);
     */
 }
 

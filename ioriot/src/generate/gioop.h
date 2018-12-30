@@ -47,7 +47,7 @@
  * @param data The pointer to the virtual file descriptor object
  * @param data2 The pointer to the corresponding generate task object.
  */
-void gioop_close_all_vfd_cb(void *data, void *data2);
+void gioop_close_all_fd_cb(void *data, void *data2);
 
 /**
  * @brief Run a generate I/O operation on a given task

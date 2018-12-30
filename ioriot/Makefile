@@ -8,6 +8,7 @@ SRCS=$(wildcard src/*.c src/*/*.c)
 HDRS=$(SRCS:.c=.h)
 OBJS=$(SRCS:.c=.o)
 all: compile
+c: clean all
 quick: clean ctags compile sudo_install
 cshell: compile
 	gdb -ex='break main; run' --args ./$(NAME)

@@ -237,6 +237,10 @@ void* hmap_get(hmap_s *h, char *key)
     return NULL;
 }
 
+bool hmap_has(hmap_s *h, char *key) {
+    return hmap_get(h, key) != NULL;
+}
+
 void* hmap_get_l(hmap_s *h, const long key)
 {
     int addr = hmap_get_addr_l(h, key);
@@ -305,7 +309,9 @@ static void _hmap_test(hmap_s *h)
     assert(1 == hmap_insert(h, "hiring", somedata));
 
     assert(NULL != hmap_get(h, "mimecast"));
+    assert(hmap_has(h, "mimecast"));
     assert(NULL == hmap_get(h, "Mimecast"));
+    assert(!hmap_has(h, "Mimecast"));
 
     assert(NULL != hmap_remove(h, "mimecast"));
     assert(NULL == hmap_remove(h, "mimecast"));

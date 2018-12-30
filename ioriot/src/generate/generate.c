@@ -39,7 +39,7 @@ generate_s* generate_new(options_s *opts)
     g->mps = mounts_new(opts);
     g->num_lines_filtered = 0;
     g->start_time = -1;
-    g->vfd_buffer = rbuffer_new(1024);
+    g->fd_map = hmap_new(1024);
     g->opts = opts;
     g->reuse_queue = rbuffer_new(1024);
     g->replay_fd = Fopen(opts->replay_file, "w");
@@ -50,7 +50,7 @@ generate_s* generate_new(options_s *opts)
 
 void generate_destroy(generate_s *g)
 {
-    rbuffer_destroy(g->vfd_buffer);
+    hmap_destroy(g->fd_map);
     mounts_destroy(g->mps);
 
     gtask_s *task = NULL;

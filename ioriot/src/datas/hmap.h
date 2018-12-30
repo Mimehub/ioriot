@@ -49,6 +49,7 @@ void* hmap_remove(hmap_s* h, char* key);
 void* hmap_replace(hmap_s* h, char* key, void *data);
 void* hmap_get_l(hmap_s* h, const long key);
 void* hmap_get(hmap_s* h, char* key);
+bool hmap_has(hmap_s* h, char* key);
 unsigned int hmap_get_addr_l(hmap_s* h, const long key);
 unsigned int hmap_get_addr(hmap_s* h, char* key);
 void hmap_print(hmap_s* h);
