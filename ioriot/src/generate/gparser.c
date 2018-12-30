@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#define _GNU_SOURCE
+//#include <stdio.h>
+
 #include "gparser.h"
 
 #include "gtask.h"
@@ -92,7 +95,6 @@ void gparser_extract(gparser_s *p, gtask_s *t)
     }
 
     if (ret == SUCCESS) {
-
         // Check for the existance of mandatory values!
         if (t->pid < 0 || t->tid < 0) {
             Cleanup(ERROR);
@@ -124,7 +126,13 @@ void gparser_extract(gparser_s *p, gtask_s *t)
             if (t->path2_r)
                 t->path2 = t->path2_r;
         }
+    }
 
+    if (t->has_fd) {
+        // TODO: All asprintf functions should check result type (whole I/O Rout source base)
+        if (-1 == asprintf(&t->fdid, "%ld:%d", t->pid, t->fd)) {
+            Error("Could not allocate memory");
+        }
     }
 
 cleanup:

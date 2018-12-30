@@ -37,20 +37,16 @@ struct generate_s_;
  */
 typedef struct gprocess_s_ {
     long pid; /**< The real PID */
-    long mapped_pid; /**< The mapped PID */
-    hmap_s *vfd_map; /**< All virtual file descriptors of that process */
-    hmap_s *fd_map; /**< All mappings from real fd to virtual fd */
-    long max_mapped_fd; /**< The max mapped fd number */
+    hmap_s *fd_map; /**< All file descriptors of the process */
 } gprocess_s;
 
 /**
  * @brief Creates a new gprocess object
  *
  * @param pid The process ID
- * @param mapped_pid the mapped PID
  * @return The new gprocess object
  */
-gprocess_s* gprocess_new(const long pid, const long mapped_pid);
+gprocess_s* gprocess_new(const long pid);
 
 /**
  * @brief Destroys a gprocess object

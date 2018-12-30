@@ -42,6 +42,7 @@ typedef struct gtask_s_ {
     int F; /**< Arguments for fcntl syscall */
     int G; /**< Arguments for fcntl syscall */
     int fd; /**< File descriptor number */
+    char *fdid; /**< The file descriptor id (pid:fd) */
     int flags; /**< File open flags */
     int mode; /**< File open mode */
     int ret; /**< ioriot process status, SUCCESS if everything is alright */

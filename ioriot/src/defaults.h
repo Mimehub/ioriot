@@ -41,8 +41,7 @@
 // The following are for debugging purposes only
 
 //#define NO_IOOP
-//#define THREAD_DEBUG
-//#define LOG_FILTERED
+//#define THREAD_DEBUG //#define LOG_FILTERED
 
 /**
  * @brief Return status codes

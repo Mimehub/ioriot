@@ -22,23 +22,19 @@ void _gprocess_vfd_map_destroy_cb(void *data)
     vfd_destroy(data);
 }
 
-gprocess_s* gprocess_new(const long pid, const long mapped_pid)
+gprocess_s* gprocess_new(const long pid)
 {
     gprocess_s* gp = Malloc(gprocess_s);
 
     gp->pid = pid;
-    gp->mapped_pid = mapped_pid;
-    gp->max_mapped_fd = 0;
     gp->fd_map = hmap_new_l(1024);
-    gp->vfd_map = hmap_new_l(1024);
-    gp->vfd_map->data_destroy = _gprocess_vfd_map_destroy_cb;
+    gp->fd_map->data_destroy = _gprocess_vfd_map_destroy_cb;
 
     return gp;
 }
 
 void gprocess_destroy(gprocess_s *gp)
 {
-    hmap_destroy(gp->vfd_map);
     hmap_destroy(gp->fd_map);
     free(gp);
 }

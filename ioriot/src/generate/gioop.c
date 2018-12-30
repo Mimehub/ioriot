@@ -35,25 +35,17 @@ status_e gioop_run(gwriter_s *w, gtask_s *t)
 
     // One of the open syscalls may openes a file handle succesfully
     if (Eq(t->op, "open")) {
-        Owriter_write(w->owriter, "%d|%s|%d|%d|open\n", OPEN, t->path, t->mode, t->flags);
-        _graph_insert(w, g, t->path, Offset);
-        Cleanup(t->ret);
+        Cleanup(gioop_open(w, t, g));
 
     } else if (Eq(t->op, "openat")) {
-        Owriter_write(w->owriter, "%d|%s|%d|%d|openat\n", OPEN_AT, t->path, t->mode, t->flags);
-        _graph_insert(w, g, t->path, Offset);
-        Cleanup(t->ret);
+        Cleanup(gioop_openat(w, t, g));
 
     } else if (Eq(t->op, "creat")) {
-        Owriter_write(w->owriter, "%d|%s|%d|%d|creat\n", CREAT, t->path, t->mode, t->flags);
-        _graph_insert(w, g, t->path, Offset);
-        Cleanup(t->ret);
+        Cleanup(gioop_creat(w, t, g));
     }
 
     return ret;
 
-    // Get the virtual file descriptor of a given real fd and store a pointer
-    // to it to t->vfd.
     if (t->has_fd) {
         Cleanup_unless(SUCCESS, ret);
     }
@@ -222,47 +214,37 @@ cleanup:
 
 status_e gioop_open(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
-    Gioop_write(OPEN, "%ld|%s|%d|%d|open",
-                t->mapped_fd, t->path, t->mode, t->flags);
+    if (!t->has_fd || t->path == NULL || t->flags == -1) {
+        return ERROR;
+    }
 
-    if (t->fd > 0)
-        vsize_open(t->vsize, t->vfd, t->path, t->flags);
-*/
+    Owriter_write(w->owriter, "%d|%s|%d|%d|open\n", OPEN, t->path, t->mode, t->flags);
+    _graph_insert(w, g, t->path, Offset);
+
     return SUCCESS;
 }
 
 status_e gioop_openat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
     if (!t->has_fd || t->path == NULL || t->flags == -1) {
         return ERROR;
     }
 
-    gprocess_create_vfd_by_realfd(t->gprocess, t, g);
-    Gioop_write(OPEN_AT, "%ld|%s|%d|%d|openat",
-                t->mapped_fd,t->path, t->mode, t->flags);
-    if (t->fd > 0)
-        vsize_open(t->vsize, t->vfd, t->path, t->flags);
-*/
+    Owriter_write(w->owriter, "%d|%s|%d|%d|openat\n", OPEN_AT, t->path, t->mode, t->flags);
+    _graph_insert(w, g, t->path, Offset);
+
     return SUCCESS;
 }
 
 status_e gioop_creat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
-    /*
     if (!t->has_fd || t->path == NULL || t->flags == -1) {
         return ERROR;
     }
 
-    gprocess_create_vfd_by_realfd(t->gprocess, t, g);
-    generate_vsize_by_path(g, t, NULL);
+    Owriter_write(w->owriter, "%d|%s|%d|%d|creat\n", CREAT, t->path, t->mode, t->flags);
+    _graph_insert(w, g, t->path, Offset);
 
-    Gioop_write(CREAT, "%ld|%s|%d|%d|creat",
-                t->mapped_fd, t->path, t->mode, t->flags);
-    if (t->fd > 0)
-        vsize_open(t->vsize, t->vfd, t->path, t->flags);
-    */
     return SUCCESS;
 }
 
