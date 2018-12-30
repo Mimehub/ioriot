@@ -22,6 +22,7 @@ gtask_s* gtask_new(void *generate)
     t->line = NULL;
     t->path_r = NULL;
     t->path2_r = NULL;
+    t->fdid = NULL;
 #ifdef LOG_FILTERED
     t->original_line = NULL;
 #endif
@@ -67,7 +68,6 @@ void gtask_init(gtask_s *t, char *line, const unsigned long lineno)
     t->op = NULL;
     t->path = NULL;
     t->path_r = NULL;
-    t->gprocess = NULL;
     t->pid = -1;
     t->pidtid = NULL;
     t->ret = 0;

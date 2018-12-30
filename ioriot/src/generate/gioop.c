@@ -218,7 +218,7 @@ status_e gioop_open(gwriter_s *w, gtask_s *t, generate_s *g)
         return ERROR;
     }
 
-    Owriter_write(w->owriter, "%d|%s|%d|%d|open\n", OPEN, t->path, t->mode, t->flags);
+    Owriter_write(w->owriter, "%d|%s|%s|%d|%d|open\n", OPEN, t->fdid, t->path, t->mode, t->flags);
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
@@ -230,7 +230,7 @@ status_e gioop_openat(gwriter_s *w, gtask_s *t, generate_s *g)
         return ERROR;
     }
 
-    Owriter_write(w->owriter, "%d|%s|%d|%d|openat\n", OPEN_AT, t->path, t->mode, t->flags);
+    Owriter_write(w->owriter, "%d|%s|%s|%d|%d|openat\n", OPEN_AT, t->fdid, t->path, t->mode, t->flags);
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
@@ -242,12 +242,11 @@ status_e gioop_creat(gwriter_s *w, gtask_s *t, generate_s *g)
         return ERROR;
     }
 
-    Owriter_write(w->owriter, "%d|%s|%d|%d|creat\n", CREAT, t->path, t->mode, t->flags);
+    Owriter_write(w->owriter, "%d|%s|%s|%d|%d|creat\n", CREAT, t->fdid, t->path, t->mode, t->flags);
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
 }
-
 
 status_e gioop_close(gwriter_s *w, gtask_s *t, generate_s *g)
 {

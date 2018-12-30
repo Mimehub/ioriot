@@ -15,7 +15,6 @@
 #ifndef GTASK_H
 #define GTASK_H
 
-#include "gprocess.h"
 #include "../vfd.h"
 #include "../datas/amap.h"
 #include "../datas/hmap.h"
@@ -59,7 +58,6 @@ typedef struct gtask_s_ {
     long tid; /**< The thread ID */
     long whence; /**< Whence */
     vfd_s *vfd; /**< A pointer to the virtual file descriptor */
-    struct gprocess_s_ *gprocess; /**< A pointer to the process object */
     void *generate; /**< A pointer to the generate object */
 #ifdef LOG_FILTERED
     char *original_line; /**< Only used for debugging purposes */
