@@ -237,7 +237,8 @@ void* hmap_get(hmap_s *h, char *key)
     return NULL;
 }
 
-bool hmap_has(hmap_s *h, char *key) {
+bool hmap_has(hmap_s *h, char *key)
+{
     return hmap_get(h, key) != NULL;
 }
 

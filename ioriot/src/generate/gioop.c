@@ -211,7 +211,8 @@ cleanup:
     return ret;
 }
 
-static status_e _gioop_open(gwriter_s *w, gtask_s *t, generate_s *g, char *str, int code) {
+static status_e _gioop_open(gwriter_s *w, gtask_s *t, generate_s *g, char *str, int code)
+{
     if (!t->has_fd || t->path == NULL || t->flags == -1) {
         return ERROR;
     }
@@ -292,7 +293,8 @@ status_e gioop_statfs64(gwriter_s *w, gtask_s *t, generate_s *g)
     return _gioop_stat(w, t, g, "statfs64", STATFS64);
 }
 
-static status_e _gioop_fstat(gwriter_s *w, gtask_s *t, generate_s *g, char *str, int code) {
+static status_e _gioop_fstat(gwriter_s *w, gtask_s *t, generate_s *g, char *str, int code)
+{
     _Require_path_from_fd;
 
     Owriter_write(w->owriter, "%d|%s|%d|%s\n", code, t->fdid, t->status, str);
@@ -321,7 +323,8 @@ status_e gioop_fstatfs64(gwriter_s *w, gtask_s *t, generate_s *g)
     return _gioop_fstat(w, t, g, "fstatfs64", FSTATFS64);
 }
 
-static status_e _gioop_rename(gwriter_s *w, gtask_s *t, generate_s *g, char *str, int code) {
+static status_e _gioop_rename(gwriter_s *w, gtask_s *t, generate_s *g, char *str, int code)
+{
     if (t->path == NULL || t->path2 == NULL ) {
         return ERROR;
     }
@@ -392,7 +395,7 @@ status_e gioop_readlink(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path;
 
     Owriter_write(w->owriter, "%d|%s|%d|%s\n",
-            READLINK, t->path, t->status, "readlink");
+                  READLINK, t->path, t->status, "readlink");
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
@@ -403,7 +406,7 @@ status_e gioop_readlinkat(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path;
 
     Owriter_write(w->owriter, "%d|%s|%d|%s\n",
-            READLINK_AT, t->path, t->status, "readlinkat");
+                  READLINK_AT, t->path, t->status, "readlinkat");
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
@@ -414,7 +417,7 @@ status_e gioop_write(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path_from_fd;
 
     Owriter_write(w->owriter, "%d|%s|%ld|write",
-            WRITE, t->fdid, t->bytes);
+                  WRITE, t->fdid, t->bytes);
     _graph_insert(w, g, _Path, Offset);
 
     return SUCCESS;
@@ -425,7 +428,7 @@ status_e gioop_writev(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path_from_fd;
 
     Owriter_write(w->owriter, "%d|%s|%ld|writev",
-            WRITEV, t->fdid, t->bytes);
+                  WRITEV, t->fdid, t->bytes);
     _graph_insert(w, g, _Path, Offset);
 
     return SUCCESS;
@@ -447,7 +450,7 @@ status_e gioop_llseek(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path_from_fd;
 
     Owriter_write(w->owriter, "%d|%s|%ld|%ld|%ld|llseek",
-                LLSEEK, t->fdid, t->offset, t->whence, t->bytes);
+                  LLSEEK, t->fdid, t->offset, t->whence, t->bytes);
     _graph_insert(w, g, _Path, Offset);
 
     return SUCCESS;
@@ -458,7 +461,7 @@ status_e gioop_getdents(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path_from_fd;
 
     Owriter_write(w->owriter, "%d|%s|%ld|%ld|getdents",
-                GETDENTS, t->fdid, t->count, t->bytes);
+                  GETDENTS, t->fdid, t->count, t->bytes);
     _graph_insert(w, g, _Path, Offset);
 
     return SUCCESS;
@@ -469,7 +472,7 @@ status_e gioop_mkdir(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path;
 
     Owriter_write(w->owriter, "%d|%s|%d|%d|mkdir",
-            MKDIR, t->path, t->mode, t->status);
+                  MKDIR, t->path, t->mode, t->status);
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
@@ -480,7 +483,7 @@ status_e gioop_rmdir(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path;
 
     Owriter_write(w->owriter, "%d|%s|%d|rmdir",
-            RMDIR, t->path, t->status);
+                  RMDIR, t->path, t->status);
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
@@ -490,8 +493,8 @@ status_e gioop_mkdirat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
     _Require_path;
 
-    Owriter_write(w->owriter, "%d|%s|%d|%d|mkdirat", 
-            MKDIR_AT, t->path, t->mode, t->status);
+    Owriter_write(w->owriter, "%d|%s|%d|%d|mkdirat",
+                  MKDIR_AT, t->path, t->mode, t->status);
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
@@ -502,7 +505,7 @@ status_e gioop_unlink(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path;
 
     Owriter_write(w->owriter, "%d|%s|%d|unlink",
-            UNLINK, t->path, t->status);
+                  UNLINK, t->path, t->status);
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
@@ -513,7 +516,7 @@ status_e gioop_unlinkat(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path;
 
     Owriter_write(w->owriter, "%d|%s|%d|unlinkat",
-            UNLINK_AT, t->path, t->status);
+                  UNLINK_AT, t->path, t->status);
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
@@ -523,8 +526,8 @@ status_e gioop_lstat(gwriter_s *w, gtask_s *t, generate_s *g)
 {
     _Require_path;
 
-    Owriter_write(w->owriter, "%d|%s|%d|lstat", 
-            LSTAT, t->path, t->status);
+    Owriter_write(w->owriter, "%d|%s|%d|lstat",
+                  LSTAT, t->path, t->status);
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
@@ -534,8 +537,8 @@ status_e gioop_fsync(gwriter_s *w, gtask_s *t, generate_s *g)
 {
     _Require_path_from_fd;
 
-    Owriter_write(w->owriter, "%d|%s|%d|fsync", 
-            FSYNC, t->fdid, t->status);
+    Owriter_write(w->owriter, "%d|%s|%d|fsync",
+                  FSYNC, t->fdid, t->status);
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
@@ -546,7 +549,7 @@ status_e gioop_fdatasync(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path_from_fd;
 
     Owriter_write(w->owriter, "%d|%s|%d|fdatasync",
-            FDATASYNC, t->fdid, t->status);
+                  FDATASYNC, t->fdid, t->status);
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
@@ -566,7 +569,7 @@ status_e gioop_syncfs(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path_from_fd;
 
     Owriter_write(w->owriter, "%d|%s|%d|syncfs",
-            SYNCFS, t->fdid, t->status);
+                  SYNCFS, t->fdid, t->status);
     _graph_insert(w, g, _Path, Offset);
 
     return SUCCESS;
@@ -577,7 +580,7 @@ status_e gioop_sync_file_range(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path_from_fd;
 
     Owriter_write(w->owriter, "%d|%s|%ld|%ld|%d|sync_file_range",
-                SYNC_FILE_RANGE, t->fdid, t->offset, t->bytes, t->status);
+                  SYNC_FILE_RANGE, t->fdid, t->offset, t->bytes, t->status);
     _graph_insert(w, g, _Path, Offset);
 
     return SUCCESS;
@@ -599,7 +602,7 @@ status_e gioop_fcntl(gwriter_s *w, gtask_s *t, generate_s *g)
     }
 
     Owriter_write(w->owriter, "%d|%s|%d|%d|%d|fcntl",
-                FCNTL, t->fdid, t->F, t->G, t->status);
+                  FCNTL, t->fdid, t->F, t->G, t->status);
     _graph_insert(w, g, _Path, Offset);
 
     return SUCCESS;
@@ -610,7 +613,7 @@ status_e gioop_chmod(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path;
 
     Owriter_write(w->owriter, "%d|%s|%d|%d|chmod",
-            CHMOD, t->path, t->mode, t->status);
+                  CHMOD, t->path, t->mode, t->status);
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
@@ -621,7 +624,7 @@ status_e gioop_fchmod(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path_from_fd;
 
     Owriter_write(w->owriter, "%d|%s|%d|%d|fchmod",
-            FCHMOD, t->fdid, t->mode, t->status);
+                  FCHMOD, t->fdid, t->mode, t->status);
     _graph_insert(w, g, _Path, Offset);
 
     return SUCCESS;
@@ -633,7 +636,7 @@ status_e gioop_chown(gwriter_s *w, gtask_s *t, generate_s *g)
 
     // Hmm, maybe rename t->offset, because here it is used for the user UID
     Owriter_write(w->owriter, "%d|%s|%ld|%d|%d|chown",
-            CHOWN, t->path, t->offset, t->G, t->status);
+                  CHOWN, t->path, t->offset, t->G, t->status);
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;
@@ -645,7 +648,7 @@ status_e gioop_fchown(gwriter_s *w, gtask_s *t, generate_s *g)
 
     // Hmm, maybe rename t->offset, because here it is used for the user UID
     Owriter_write(w->owriter, "%d|%s|%ld|%d|%d|fchown",
-            FCHOWN, t->fdid, t->offset, t->G, t->status);
+                  FCHOWN, t->fdid, t->offset, t->G, t->status);
     _graph_insert(w, g, _Path, Offset);
 
     return SUCCESS;
@@ -657,7 +660,7 @@ status_e gioop_lchown(gwriter_s *w, gtask_s *t, generate_s *g)
 
     // Hmm, maybe rename t->offset, because here it is used for the user UID
     Owriter_write(w->owriter, "%d|%s|%ld|%d|%d|chown",
-            LCHOWN, t->path, t->offset, t->G, t->status);
+                  LCHOWN, t->path, t->offset, t->G, t->status);
     _graph_insert(w, g, t->path, Offset);
 
     return SUCCESS;

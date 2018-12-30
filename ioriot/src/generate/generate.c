@@ -25,7 +25,8 @@
 
 #define _Perc_filtered (g->num_lines_filtered / (g->lineno/100.0))
 
-static void _graph_destroy_cb(void *data) {
+static void _graph_destroy_cb(void *data)
+{
 }
 
 generate_s* generate_new(options_s *opts)
