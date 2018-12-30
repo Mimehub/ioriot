@@ -674,6 +674,7 @@ status_e gioop_exit_group(gwriter_s *w, gtask_s *t, generate_s *g)
 
 void gioop_close_all_fd_cb(void *data, void *data2)
 {
+    // TODO: Implement closing fds when process terminates
     /*
     gtask_s *t = data2;
     t->vfd = data;
