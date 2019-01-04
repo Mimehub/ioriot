@@ -31,3 +31,4 @@ dockerbuild:
 	docker run -v $(PWD)/docker/opt:/opt -e 'KERNEL=$(KERNEL)' -it ioriot:$(KERNEL) make all test install
 dockerclean:
 	bash -c 'test -d $(PWD)/docker && rm -Rfv $(PWD)/docker; exit 0'
+jenkins: dockerbuild
