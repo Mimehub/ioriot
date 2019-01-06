@@ -38,8 +38,9 @@ void gtask_init(gtask_s *t, char *line, const unsigned long lineno)
 
     if (t->path_r)
         free(t->path_r);
-    if (t->path2_r)
+    if (t->path2_r) {
         free(t->path2_r);
+    }
     if (t->fdid)
         free(t->fdid);
 
@@ -68,6 +69,8 @@ void gtask_init(gtask_s *t, char *line, const unsigned long lineno)
     t->op = NULL;
     t->path = NULL;
     t->path_r = NULL;
+    t->path2 = NULL;
+    t->path2_r = NULL;
     t->pid = -1;
     t->pidtid = NULL;
     t->ret = 0;

@@ -68,10 +68,12 @@ unsigned int list_keys_destroy(list_s* l, char* substr);
  * @param l The list.
  * @param substr The substring.
  * @param cb The callback function.
+ * @param data2 Additional data.
  *
  * @return Count of elements destroyed/removed.
  **/
-unsigned int list_keys_destroy_cb(list_s* l, char* substr, void (*cb)(void *data));
+unsigned int list_keys_destroy_cb(list_s* l, char* substr,
+        void (*cb)(char *key, void *data, void *data2), void *data2);
 
 void* list_key_get(list_s* l, char *key);
 void* list_key_get_l(list_s* l, const long key);

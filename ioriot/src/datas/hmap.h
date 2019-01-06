@@ -66,10 +66,12 @@ unsigned int hmap_keys_destroy(hmap_s* h, char* substr);
  * @param h The hmap.
  * @param substr The substring.
  * @param cb The callback function.
+ * @param data2 Additional data.
  *
  * @return Count of elements destroyed/removed.
  **/
-unsigned int hmap_keys_destroy_cb(hmap_s* h, char* substr, void (*cb)(void *data));
+unsigned int hmap_keys_destroy_cb(hmap_s* h, char* substr,
+        void (*cb)(char *key, void *data, void *data2), void *data2);
 
 void* hmap_replace(hmap_s* h, char* key, void *data);
 void* hmap_get_l(hmap_s* h, const long key);

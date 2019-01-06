@@ -17,8 +17,6 @@
 
 #include "gwriter.h"
 #include "../datas/rbuffer.h"
-#include "../datas/hmap.h"
-#include "../datas/graph.h"
 #include "../defaults.h"
 #include "../mounts.h"
 #include "../options.h"
@@ -40,9 +38,7 @@ typedef struct generate_s_ {
     FILE *replay_fd; /**< The fd of the .replay file */
     mounts_s *mps; /**< The mounts object */
     options_s *opts; /**< A pointer to the options object */
-    hmap_s *fd_map; /**< The file descriptor map */
     rbuffer_s *reuse_queue; /**< A task buffer, for reusing these */
-    graph_s *graph; /**< The in-memory execution graph */
     struct gwriter_s_ *writer; /**< A pointer to the writer object */
 } generate_s;
 

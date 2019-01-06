@@ -25,10 +25,6 @@
 
 #define _Perc_filtered (g->num_lines_filtered / (g->lineno/100.0))
 
-static void _graph_destroy_cb(void *data)
-{
-}
-
 generate_s* generate_new(options_s *opts)
 {
     generate_s *g = Malloc(generate_s);
@@ -40,18 +36,15 @@ generate_s* generate_new(options_s *opts)
     g->mps = mounts_new(opts);
     g->num_lines_filtered = 0;
     g->start_time = -1;
-    g->fd_map = hmap_new(1024);
     g->opts = opts;
     g->reuse_queue = rbuffer_new(1024);
     g->replay_fd = Fopen(opts->replay_file, "w");
-    g->graph = graph_new(1024*1024, _graph_destroy_cb);
 
     return g;
 }
 
 void generate_destroy(generate_s *g)
 {
-    hmap_destroy(g->fd_map);
     mounts_destroy(g->mps);
 
     gtask_s *task = NULL;
@@ -60,7 +53,6 @@ void generate_destroy(generate_s *g)
     rbuffer_destroy(g->reuse_queue);
 
     fclose(g->replay_fd);
-    graph_destroy(g->graph);
     free(g);
 }
 

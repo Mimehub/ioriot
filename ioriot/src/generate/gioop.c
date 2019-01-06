@@ -19,14 +19,14 @@
 
 #define _Require_path_from_fd \
     if (!t->has_fd) { return ERROR; } \
-    char *_Path = hmap_get(g->fd_map, t->fdid); \
+    char *_Path = hmap_get(w->fd_map, t->fdid); \
     if (!_Path) { return ERROR; }
 
-static void _graph_insert(gwriter_s *w, generate_s *g, char *path, long offset)
+static void _graph_insert(gwriter_s *w, char *path, long offset)
 {
     if (path)
-        graph_insert(g->graph, path, &offset);
-    Out("%ld\n", offset);
+        graph_insert(w->graph, path, &offset);
+    //Out("%ld\n", offset);
 }
 
 status_e gioop_run(gwriter_s *w, gtask_s *t)
@@ -218,16 +218,16 @@ static status_e _gioop_open(gwriter_s *w, gtask_s *t, generate_s *g, char *str, 
     }
 
     // Notify that process has a specific file descriptor open
-    char *path = hmap_replace(g->fd_map, t->fdid, Clone(t->path));
+    char *path = hmap_replace(w->fd_map, t->fdid, Clone(t->path));
     if (path) {
         // In case that the process already had the same fd open inject a close
         Owriter_write(w->owriter, "%d|%s|%s\n", CLOSE, t->fdid, "injected close");
-        _graph_insert(w, g, t->path, Offset);
+        _graph_insert(w, t->path, Offset);
         free(path);
     }
 
     Owriter_write(w->owriter, "%d|%s|%s|%d|%d|%s\n", code, t->fdid, t->path, t->mode, t->flags, str);
-    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, t->path, Offset);
 
     return SUCCESS;
 }
@@ -253,7 +253,7 @@ status_e gioop_close(gwriter_s *w, gtask_s *t, generate_s *g)
         return ERROR;
     }
 
-    char *path = hmap_remove(g->fd_map, t->fdid);
+    char *path = hmap_remove(w->fd_map, t->fdid);
 
     if (!path) {
         // Not closing, as there was no such fd open
@@ -261,7 +261,7 @@ status_e gioop_close(gwriter_s *w, gtask_s *t, generate_s *g)
     }
 
     Owriter_write(w->owriter, "%d|%s|%s\n", CLOSE, t->fdid, "close");
-    _graph_insert(w, g, path, Offset);
+    _graph_insert(w, path, Offset);
 
     return SUCCESS;
 }
@@ -273,7 +273,7 @@ static status_e _gioop_stat(gwriter_s *w, gtask_s *t, generate_s *g, char *str, 
     }
 
     Owriter_write(w->owriter, "%d|%s|%d|%s\n", code, t->path, t->status, str);
-    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, t->path, Offset);
 
     return SUCCESS;
 }
@@ -298,7 +298,7 @@ static status_e _gioop_fstat(gwriter_s *w, gtask_s *t, generate_s *g, char *str,
     _Require_path_from_fd;
 
     Owriter_write(w->owriter, "%d|%s|%d|%s\n", code, t->fdid, t->status, str);
-    _graph_insert(w, g, _Path, Offset);
+    _graph_insert(w, _Path, Offset);
 
     return SUCCESS;
 }
@@ -330,8 +330,8 @@ static status_e _gioop_rename(gwriter_s *w, gtask_s *t, generate_s *g, char *str
     }
 
     Owriter_write(w->owriter, "%d|%s|%s|%s\n", code, t->path, t->path2, str);
-    _graph_insert(w, g, t->path, Offset);
-    _graph_insert(w, g, t->path2, Offset);
+    _graph_insert(w, t->path, Offset);
+    _graph_insert(w, t->path2, Offset);
 
     return SUCCESS;
 }
@@ -355,7 +355,7 @@ status_e gioop_read(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path_from_fd;
 
     Owriter_write(w->owriter, "%d|%s|%s\n", CLOSE, t->fdid, "close");
-    _graph_insert(w, g, _Path, Offset);
+    _graph_insert(w, _Path, Offset);
 
     return SUCCESS;
 }
@@ -365,7 +365,7 @@ status_e gioop_readv(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path_from_fd;
 
     Owriter_write(w->owriter, "%d|%s|%s\n", READ, t->fdid, "readv");
-    _graph_insert(w, g, _Path, Offset);
+    _graph_insert(w, _Path, Offset);
 
     return SUCCESS;
 }
@@ -375,7 +375,7 @@ status_e gioop_readahead(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path_from_fd;
 
     Owriter_write(w->owriter, "%d|%s|%ld|%ld|%s\n", READAHEAD, t->fdid, t->offset, t->count, "readahead");
-    _graph_insert(w, g, _Path, Offset);
+    _graph_insert(w, _Path, Offset);
 
     return SUCCESS;
 }
@@ -385,7 +385,7 @@ status_e gioop_readdir(gwriter_s *w, gtask_s *t, generate_s *g)
     _Require_path_from_fd;
 
     Owriter_write(w->owriter, "%d|%s|%d|%s\n", READDIR, t->fdid, t->status, "readdir");
-    _graph_insert(w, g, _Path, Offset);
+    _graph_insert(w, _Path, Offset);
 
     return SUCCESS;
 }
@@ -396,7 +396,7 @@ status_e gioop_readlink(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%d|%s\n",
                   READLINK, t->path, t->status, "readlink");
-    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, t->path, Offset);
 
     return SUCCESS;
 }
@@ -407,7 +407,7 @@ status_e gioop_readlinkat(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%d|%s\n",
                   READLINK_AT, t->path, t->status, "readlinkat");
-    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, t->path, Offset);
 
     return SUCCESS;
 }
@@ -418,7 +418,7 @@ status_e gioop_write(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%ld|write",
                   WRITE, t->fdid, t->bytes);
-    _graph_insert(w, g, _Path, Offset);
+    _graph_insert(w, _Path, Offset);
 
     return SUCCESS;
 }
@@ -429,7 +429,7 @@ status_e gioop_writev(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%ld|writev",
                   WRITEV, t->fdid, t->bytes);
-    _graph_insert(w, g, _Path, Offset);
+    _graph_insert(w, _Path, Offset);
 
     return SUCCESS;
 }
@@ -440,7 +440,7 @@ status_e gioop_lseek(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%ld|%ld|%ld|lseek",
                   LSEEK, t->fdid, t->offset, t->whence, t->bytes);
-    _graph_insert(w, g, _Path, Offset);
+    _graph_insert(w, _Path, Offset);
 
     return SUCCESS;
 }
@@ -451,7 +451,7 @@ status_e gioop_llseek(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%ld|%ld|%ld|llseek",
                   LLSEEK, t->fdid, t->offset, t->whence, t->bytes);
-    _graph_insert(w, g, _Path, Offset);
+    _graph_insert(w, _Path, Offset);
 
     return SUCCESS;
 }
@@ -462,7 +462,7 @@ status_e gioop_getdents(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%ld|%ld|getdents",
                   GETDENTS, t->fdid, t->count, t->bytes);
-    _graph_insert(w, g, _Path, Offset);
+    _graph_insert(w, _Path, Offset);
 
     return SUCCESS;
 }
@@ -473,7 +473,7 @@ status_e gioop_mkdir(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%d|%d|mkdir",
                   MKDIR, t->path, t->mode, t->status);
-    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, t->path, Offset);
 
     return SUCCESS;
 }
@@ -484,7 +484,7 @@ status_e gioop_rmdir(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%d|rmdir",
                   RMDIR, t->path, t->status);
-    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, t->path, Offset);
 
     return SUCCESS;
 }
@@ -495,7 +495,7 @@ status_e gioop_mkdirat(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%d|%d|mkdirat",
                   MKDIR_AT, t->path, t->mode, t->status);
-    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, t->path, Offset);
 
     return SUCCESS;
 }
@@ -506,7 +506,7 @@ status_e gioop_unlink(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%d|unlink",
                   UNLINK, t->path, t->status);
-    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, t->path, Offset);
 
     return SUCCESS;
 }
@@ -517,7 +517,7 @@ status_e gioop_unlinkat(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%d|unlinkat",
                   UNLINK_AT, t->path, t->status);
-    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, t->path, Offset);
 
     return SUCCESS;
 }
@@ -528,7 +528,7 @@ status_e gioop_lstat(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%d|lstat",
                   LSTAT, t->path, t->status);
-    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, t->path, Offset);
 
     return SUCCESS;
 }
@@ -539,7 +539,7 @@ status_e gioop_fsync(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%d|fsync",
                   FSYNC, t->fdid, t->status);
-    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, t->path, Offset);
 
     return SUCCESS;
 }
@@ -550,7 +550,7 @@ status_e gioop_fdatasync(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%d|fdatasync",
                   FDATASYNC, t->fdid, t->status);
-    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, t->path, Offset);
 
     return SUCCESS;
 }
@@ -559,7 +559,7 @@ status_e gioop_sync(gwriter_s *w, gtask_s *t, generate_s *g)
 {
     Owriter_write(w->owriter, "%d|%d|sync", SYNC,  t->status);
     // TODO: Use last known existent path for global fsync
-    _graph_insert(w, g, "%d|/", Offset);
+    _graph_insert(w, "%d|/", Offset);
 
     return SUCCESS;
 }
@@ -570,7 +570,7 @@ status_e gioop_syncfs(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%d|syncfs",
                   SYNCFS, t->fdid, t->status);
-    _graph_insert(w, g, _Path, Offset);
+    _graph_insert(w, _Path, Offset);
 
     return SUCCESS;
 }
@@ -581,7 +581,7 @@ status_e gioop_sync_file_range(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%ld|%ld|%d|sync_file_range",
                   SYNC_FILE_RANGE, t->fdid, t->offset, t->bytes, t->status);
-    _graph_insert(w, g, _Path, Offset);
+    _graph_insert(w, _Path, Offset);
 
     return SUCCESS;
 }
@@ -603,7 +603,7 @@ status_e gioop_fcntl(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%d|%d|%d|fcntl",
                   FCNTL, t->fdid, t->F, t->G, t->status);
-    _graph_insert(w, g, _Path, Offset);
+    _graph_insert(w, _Path, Offset);
 
     return SUCCESS;
 }
@@ -614,7 +614,7 @@ status_e gioop_chmod(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%d|%d|chmod",
                   CHMOD, t->path, t->mode, t->status);
-    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, t->path, Offset);
 
     return SUCCESS;
 }
@@ -625,7 +625,7 @@ status_e gioop_fchmod(gwriter_s *w, gtask_s *t, generate_s *g)
 
     Owriter_write(w->owriter, "%d|%s|%d|%d|fchmod",
                   FCHMOD, t->fdid, t->mode, t->status);
-    _graph_insert(w, g, _Path, Offset);
+    _graph_insert(w, _Path, Offset);
 
     return SUCCESS;
 }
@@ -637,7 +637,7 @@ status_e gioop_chown(gwriter_s *w, gtask_s *t, generate_s *g)
     // Hmm, maybe rename t->offset, because here it is used for the user UID
     Owriter_write(w->owriter, "%d|%s|%ld|%d|%d|chown",
                   CHOWN, t->path, t->offset, t->G, t->status);
-    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, t->path, Offset);
 
     return SUCCESS;
 }
@@ -649,7 +649,7 @@ status_e gioop_fchown(gwriter_s *w, gtask_s *t, generate_s *g)
     // Hmm, maybe rename t->offset, because here it is used for the user UID
     Owriter_write(w->owriter, "%d|%s|%ld|%d|%d|fchown",
                   FCHOWN, t->fdid, t->offset, t->G, t->status);
-    _graph_insert(w, g, _Path, Offset);
+    _graph_insert(w, _Path, Offset);
 
     return SUCCESS;
 }
@@ -661,9 +661,19 @@ status_e gioop_lchown(gwriter_s *w, gtask_s *t, generate_s *g)
     // Hmm, maybe rename t->offset, because here it is used for the user UID
     Owriter_write(w->owriter, "%d|%s|%ld|%d|%d|chown",
                   LCHOWN, t->path, t->offset, t->G, t->status);
-    _graph_insert(w, g, t->path, Offset);
+    _graph_insert(w, t->path, Offset);
 
     return SUCCESS;
+}
+
+static void _gioop_exit_group_cb(char *key, void *data, void *data2)
+{
+    char *path = data;
+    gwriter_s *w = data2;
+
+    Put("DEBUG CLOSE: %s", key);
+    Owriter_write(w->owriter, "%d|%s|%s (%s)\n", CLOSE, key, "close on exit_group", path);
+    _graph_insert(w, path, Offset);
 }
 
 status_e gioop_exit_group(gwriter_s *w, gtask_s *t, generate_s *g)
@@ -674,8 +684,9 @@ status_e gioop_exit_group(gwriter_s *w, gtask_s *t, generate_s *g)
     char *pidstr;
     Asprintf(&pidstr, "%ld:", t->pid);
 
-    // Destroy all elements with keys including pidstr
-    hmap_keys_destroy(g->fd_map, pidstr);
+    // Destroy all elements with keys including pidstr, run
+    // callback function on data before destroying it.
+    hmap_keys_destroy_cb(w->fd_map, pidstr, _gioop_exit_group_cb, w);
     free(pidstr);
 
     return SUCCESS;
