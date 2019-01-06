@@ -222,13 +222,13 @@ unsigned int hmap_keys_destroy(hmap_s *h, char *substr)
     unsigned int num_destroyed = 0;
 
     for (int i = 0; i < h->size; ++i) {
-        if (h->l[i] && strstr(h->keys[i], substr) != NULL) {
+        if (h->l[i]) {
             list_s *l = h->l[i];
             if (h->data_destroy)
                 h->l[i]->data_destroy = h->data_destroy;
             num_destroyed += list_keys_destroy(l, substr);
-        }
-        if (h->data[i] && strstr(h->keys[i], substr) != NULL) {
+
+        } else if (h->data[i] && strstr(h->keys[i], substr) != NULL) {
             if (h->data_destroy)
                 h->data_destroy(h->data[i]);
             free(h->keys[i]);
@@ -356,7 +356,13 @@ static void _hmap_test(hmap_s *h)
     assert(321 == (long)hmap_replace(h, "i am going to be replaced", (void*)3210));
     assert(3210 == (long)hmap_get(h, "i am going to be replaced"));
 
-    //hmap_print(h);
+    assert(1 == hmap_insert(h, "hmap destroy test data", (void*)42));
+    assert(1 == hmap_insert(h, "hmap destroy test data 1", (void*)42));
+    assert(1 == hmap_insert(h, "hmap destroy test data 2", (void*)42));
+    assert(1 == hmap_insert(h, "hmap destroy test data 3", (void*)42));
+    assert(4 == hmap_keys_destroy(h, "destroy test data"));
+
+    hmap_print(h);
 }
 
 static void _hmap_test_l(hmap_s *h)

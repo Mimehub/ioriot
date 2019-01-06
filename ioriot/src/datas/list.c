@@ -280,6 +280,16 @@ void list_test(void)
     assert(1 == list_key_insert(l, "MiMecast", (void*)42));
     assert(42 == (long)list_key_get(l, "MiMecast"));
 
+    assert(1 == list_key_insert(l, "list keys destroy test data", somedata));
+    assert(1 == list_key_insert(l, "list keys destroy test data 0", somedata));
+    assert(1 == list_key_insert(l, "list keys destroy test data 2", somedata));
+    assert(1 == list_key_insert(l, "list keys destroy test data 3", somedata));
+    Put("Before destroying list test data");
+    list_print(l);
+    assert(4 == list_keys_destroy(l, "destroy test data"));
+    Put("After destroying list test data");
+    list_print(l);
+
     l = list_new_l();
 
     assert(1 == list_key_insert_l(l, 1, (void*)1));
