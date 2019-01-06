@@ -48,9 +48,21 @@ int list_key_insert(list_s* l, char *key, void *data);
 int list_key_insert_l(list_s* l, const long key, void *data);
 void* list_key_remove(list_s* l, char *key);
 void* list_key_remove_l(list_s* l, const long key);
+
+/**
+ * @brief Removes and destroys all elements where key includes a substring
+ *
+ * @param l The list.
+ * @param substr The substring.
+ *
+ * @return Count of elements destroyed/removed.
+ **/
+unsigned int list_keys_destroy(list_s* l, char* substr);
+
 void* list_key_get(list_s* l, char *key);
 void* list_key_get_l(list_s* l, const long key);
 void list_print(list_s* l);
 void list_test();
+
 
 #endif // LIST_H

@@ -158,6 +158,37 @@ void* list_key_remove_l(list_s *l, const long key)
     return NULL;
 }
 
+unsigned int list_keys_destroy(list_s* l, char* substr)
+{
+    unsigned int num_destroyed = 0;
+    list_elem_s *current = l->first;
+
+    while (current) {
+        list_elem_s *next = current->next;
+
+        if (current->key != NULL && strstr(current->key, substr) != NULL) {
+            if (current->prev == NULL) {
+                next->prev = NULL;
+                l->first = next;
+            } else {
+                next->prev = current->prev;
+                current->prev->next = next;
+            }
+
+            free(current->key);
+            if (current->data && l->data_destroy)
+                l->data_destroy(current->data);
+            free(current);
+
+            num_destroyed++;
+        }
+
+        current = next;
+    }
+
+    return num_destroyed;
+}
+
 void* list_key_get(list_s *l, char *key)
 {
     list_elem_s *current = l->first;
