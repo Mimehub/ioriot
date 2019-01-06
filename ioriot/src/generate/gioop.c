@@ -670,20 +670,13 @@ status_e gioop_exit_group(gwriter_s *w, gtask_s *t, generate_s *g)
 {
     // It means that the process and all its threads terminate.
     // Therefore close all file handles of that process!
-    hmap_run_cb2(g->fd_map, gioop_close_all_fd_cb, t);
+
+    char *pidstr;
+    Asprintf(&pidstr, "%ld:", t->pid);
+
+    // Destroy all elements with keys including pidstr
+    hmap_keys_destroy(g->fd_map, pidstr);
+    free(pidstr);
 
     return SUCCESS;
 }
-
-void gioop_close_all_fd_cb(void *data, void *data2)
-{
-    // TODO: Implement closing fds when process terminates
-    /*
-    gtask_s *t = data2;
-    t->vfd = data;
-    generate_s *g = t->generate;
-
-    Owriter_write(w->owriter, CLOSE, "%ld|%d|close on exit_group", t->vfd->mapped_fd, 0);
-    */
-}
-

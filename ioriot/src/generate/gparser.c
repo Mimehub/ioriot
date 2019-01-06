@@ -129,10 +129,7 @@ void gparser_extract(gparser_s *p, gtask_s *t)
     }
 
     if (t->has_fd) {
-        // TODO: All asprintf functions should check result type (whole I/O Rout source base)
-        if (-1 == asprintf(&t->fdid, "%ld:%d", t->pid, t->fd)) {
-            Error("Could not allocate memory");
-        }
+        Asprintf(&t->fdid, "%ld:%d", t->pid, t->fd);
     }
 
 cleanup:

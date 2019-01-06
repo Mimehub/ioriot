@@ -46,6 +46,8 @@
     notnull(realloc(where,count*sizeof(what)),__FILE__,__LINE__,1)
 #define Mset(where,value,count,what) \
     memset(where,value,count*sizeof(what))
+#define Asprintf(...) \
+    notnum(-1, asprintf(__VA_ARGS__),__FILE__,__LINE__,1)
 
 // Open helpers
 #define Fopen(path, mode) fnotnull(fopen(path, mode), path, __FILE__, __LINE__)
