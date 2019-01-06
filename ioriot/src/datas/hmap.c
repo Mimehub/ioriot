@@ -219,6 +219,11 @@ void* hmap_remove_l(hmap_s *h, const long key)
 
 unsigned int hmap_keys_destroy(hmap_s *h, char *substr)
 {
+    return hmap_keys_destroy_cb(h, substr, NULL);
+}
+
+unsigned int hmap_keys_destroy_cb(hmap_s *h, char *substr, void (*cb)(void *data))
+{
     unsigned int num_destroyed = 0;
 
     for (int i = 0; i < h->size; ++i) {
@@ -226,9 +231,11 @@ unsigned int hmap_keys_destroy(hmap_s *h, char *substr)
             list_s *l = h->l[i];
             if (h->data_destroy)
                 h->l[i]->data_destroy = h->data_destroy;
-            num_destroyed += list_keys_destroy(l, substr);
+            num_destroyed += list_keys_destroy_cb(l, substr, cb);
 
         } else if (h->data[i] && strstr(h->keys[i], substr) != NULL) {
+            if (cb)
+                cb(h->data[i]);
             if (h->data_destroy)
                 h->data_destroy(h->data[i]);
             free(h->keys[i]);

@@ -57,6 +57,20 @@ void* hmap_remove(hmap_s* h, char* key);
  **/
 unsigned int hmap_keys_destroy(hmap_s* h, char* substr);
 
+/**
+ * @brief Removes and destroys all elements where key includes a substring
+ *
+ * Same as hmap_keys_destroy but also runs a cb on the data before
+ * destroying it.
+ *
+ * @param h The hmap.
+ * @param substr The substring.
+ * @param cb The callback function.
+ *
+ * @return Count of elements destroyed/removed.
+ **/
+unsigned int hmap_keys_destroy_cb(hmap_s* h, char* substr, void (*cb)(void *data));
+
 void* hmap_replace(hmap_s* h, char* key, void *data);
 void* hmap_get_l(hmap_s* h, const long key);
 void* hmap_get(hmap_s* h, char* key);

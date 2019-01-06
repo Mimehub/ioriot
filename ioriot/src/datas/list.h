@@ -59,6 +59,20 @@ void* list_key_remove_l(list_s* l, const long key);
  **/
 unsigned int list_keys_destroy(list_s* l, char* substr);
 
+/**
+ * @brief Removes and destroys all elements where key includes a substring
+ *
+ * Same as list_keys_destroy but also calls a cb before destroying 
+ * the data.
+ *
+ * @param l The list.
+ * @param substr The substring.
+ * @param cb The callback function.
+ *
+ * @return Count of elements destroyed/removed.
+ **/
+unsigned int list_keys_destroy_cb(list_s* l, char* substr, void (*cb)(void *data));
+
 void* list_key_get(list_s* l, char *key);
 void* list_key_get_l(list_s* l, const long key);
 void list_print(list_s* l);
