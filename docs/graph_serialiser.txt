@@ -23,7 +23,7 @@ write_node_list(j, prev, num, nodes)
             prev = n
         write(j, "n.id,")
 
-node_size(node)
+node_size(node) // node size in string length (bytes)
     unsigned long: 4294967295 (10 chars)
 
     id, num_prev, num_next fields
@@ -32,5 +32,7 @@ node_size(node)
         + (10 + 1) * (num_prev + num_next)
     field separators '|'
         + 5
-    newline and EOL
-        + 2
+    newline
+        + 1
+
+        => 36 + (10+1)*(num_prev+num_next)
