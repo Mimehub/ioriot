@@ -14,15 +14,20 @@
 
 #include "mmap.h"
 
+static void _mmap_mmap(mmap_s *m)
+{
+    m->memory = mmap(0, m->size, PROT_READ | PROT_WRITE, MAP_SHARED, m->fd, 0);
+    if (m->memory == MAP_FAILED)
+    {
+        Error("Error mmapping file '%s'", m->file);
+    }
+}
+
 mmap_s* mmap_new(char *name, unsigned long size)
 {
     mmap_s *m = Malloc(mmap_s);
     Asprintf(&m->file, "%s.mmap", name);
-
     m->size = size;
-    if (m->size > MAX_MMAP_SIZE) {
-        Error("Exceeded max mmap size of '%ld' (%ld)", MAX_MMAP_SIZE, m->size);
-    }
 
     m->fd = open(m->file, O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
     if (m->fd == -1) {
@@ -41,11 +46,7 @@ mmap_s* mmap_new(char *name, unsigned long size)
         Errno("Could not write last byte to file '%s'", m->file);
     }
 
-    m->memory = mmap(0, m->size, PROT_READ | PROT_WRITE, MAP_SHARED, m->fd, 0);
-    if (m->memory == MAP_FAILED)
-    {
-        Error("Error mmapping file '%s'", m->file);
-    }
+    _mmap_mmap(m);
 
     return m;
 }
@@ -59,20 +60,13 @@ mmap_s* mmap_open(char *name) {
         Errno("Could not determine file size of file '%s'", m->file);
     }
     m->size = st.st_size;
-    if (m->size > MAX_MMAP_SIZE) {
-        Error("Exceeded max mmap size of '%ld' (%ld)", MAX_MMAP_SIZE, m->size);
-    }
 
     m->fd = open(m->file, O_RDWR);
     if (m->fd == -1) {
         Errno("Could not open file '%s'", m->file);
     }
 
-    m->memory = mmap(0, m->size, PROT_READ | PROT_WRITE, MAP_SHARED, m->fd, 0);
-    if (m->memory == MAP_FAILED)
-    {
-        Errno("Error mmapping file '%s'", m->file);
-    }
+    _mmap_mmap(m);
 
     return m;
 }
