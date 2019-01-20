@@ -18,6 +18,8 @@
 #include "version.h"
 #include "utils/utils.h"
 
+#include "limits.h" // *_MAX variables
+
 /** Max amount of tokens per line in the .capture file */
 #define MAX_TOKENS 10
 /** Max line length in either .capture or .replay file */
@@ -31,7 +33,8 @@
 /** Ignore file hole size */
 #define IGNORE_FILE_HOLE_BYTES 1024*1024*10
 /** Max mmap file size */
-#define MAX_MMAP_SIZE 1024*1024*1024  // 1tb
+#define MAX_MMAP_SIZE 4096 * (unsigned long) INT_MAX
+
 
 // The following are for debugging purposes only
 

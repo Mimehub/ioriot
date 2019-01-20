@@ -34,10 +34,29 @@ mmap_s* mmap_new(char *name, unsigned long size)
         Errno("Could not open file '%s'", m->file);
     }
 
-    // We want a sparse file, so we can mmap 'size' bytes
-    if (lseek(m->fd, m->size-1, SEEK_SET) == -1)
-    {
-        Errno("Could not sparse file '%s' (size:%ld:%ld)", m->file, m->size, size);
+    // We want a sparse file, so we can mmap 'size' bytes. We substract
+    // 1 from size as we want to write '\0' at the end of the sparse file.
+    // We also have to run lseek in a loop, as the offset may be greater
+    // than INT_MAX!
+
+    unsigned long seek_times = (size-1) / (unsigned long) INT_MAX;
+    int rest = (int) ((size-1) - seek_times * INT_MAX);
+    unsigned long cur_offset = 0;
+
+    for (int i = 0; i < seek_times; ++i) {
+        if (lseek(m->fd, INT_MAX, SEEK_CUR) == -1) {
+            Errno("Could not increase seek offset '%s' (offset: '%lu', iteration '%d')",
+                  m->file, cur_offset, i);
+        }
+        cur_offset += INT_MAX;
+    }
+
+    if (rest > 0) {
+        if (lseek(m->fd, rest, SEEK_CUR) == -1) {
+            Errno("Could not increase seek offset '%s' (offset: '%lu', rest '%d')",
+                  m->file, cur_offset, rest);
+        }
+        cur_offset += rest;
     }
 
     // Write '\0' at the end to the file
@@ -45,9 +64,9 @@ mmap_s* mmap_new(char *name, unsigned long size)
     {
         Errno("Could not write last byte to file '%s'", m->file);
     }
+    //assert(size == cur_offset+1);
 
     _mmap_mmap(m);
-
     return m;
 }
 
@@ -67,7 +86,6 @@ mmap_s* mmap_open(char *name) {
     }
 
     _mmap_mmap(m);
-
     return m;
 }
 
@@ -76,6 +94,7 @@ void mmap_destroy(mmap_s *m)
     if (munmap(m->memory, m->size) == -1) {
         Error("Error unmapping file '%s'", m->file);
     }
+
     close(m->fd);
     free(m->file);
 }
@@ -95,12 +114,14 @@ void mmap_test_simple()
     mmap_s *m = mmap_new("mmap_test_simple", MAX_MMAP_SIZE);
     char *mapped = m->memory;
     strcpy(mapped, text);
+    mapped[MAX_MMAP_SIZE-1] = 'x';
     mmap_destroy(m);
 
     // Now read it from the file
     m = mmap_open("mmap_test_simple");
     mapped = m->memory;
     assert(strncmp(text, mapped, strlen(text)) == 0);
+    assert(mapped[MAX_MMAP_SIZE-1] == 'x');
     //mmap_unlink(m);
     mmap_destroy(m);
 }
@@ -113,7 +134,6 @@ typedef struct _mmap_test_s_ {
 void mmap_test_complex()
 {
     int num_elems = 1000000;
-
     Put("mmap_test_complex: %d", num_elems);
 
     // First write to a mmapped file
