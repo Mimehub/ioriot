@@ -88,10 +88,13 @@ FILE* fnotnull(FILE *fd, const char *path, char *file, int line);
  *
  * @param not Code in case of an error.
  * @param num Return code of the function.
+ * @param what Some context about this.
+ * @param file The source file the memory was allocated at
  * @param line The source line number the memory was allocated at
  * @param count The amount of memory being allocated
+ * @return Returns num.
  */
-void notnum(int not, int num, char *file, int line, int count);
+int notnum(int not, int num, char *what, char *file, int line, int count);
 
 /**
  * @brief Check whether allocated memory via mmap is not null

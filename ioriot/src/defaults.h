@@ -30,6 +30,8 @@
 #define SET_RLIMIT_NPROC 30768
 /** Ignore file hole size */
 #define IGNORE_FILE_HOLE_BYTES 1024*1024*10
+/** Max mmap file size */
+#define MAX_MMAP_SIZE 1024*1024*1024  // 1tb
 
 // The following are for debugging purposes only
 
