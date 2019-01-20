@@ -23,7 +23,7 @@
 typedef struct mmap_s_ {
   char *file; /**< The file name */
   int fd; /**< The fd of the mapped file */
-  int size; /**< The size of the file */
+  unsigned long size; /**< The size of the file */
   void *memory; /**< The mapped memory */
 } mmap_s;
 
@@ -33,7 +33,7 @@ typedef struct mmap_s_ {
  * @param size The size of the file in bytes
  * @return The map object
  */
-mmap_s* mmap_new(char *name, int size);
+mmap_s* mmap_new(char *name, unsigned long size);
 
 /**
  * @brief Opens an already mmapped file
