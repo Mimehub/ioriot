@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#define _GNU_SOURCE
+#include <stdio.h>
 #include <libgen.h>
 
 #include "graph.h"
@@ -52,11 +54,9 @@ cleanup:
 }
 
 
-graph_node_s *graph_node_new(void *data, char *path)
+static void _graph_node_init(graph_node_s *e, void *data, char *path)
 {
     static unsigned long id = 0;
-    graph_node_s *e = Malloc(graph_node_s);
-
     e->id = id++;
     e->traversed = false;
     e->path = Clone(path);
@@ -64,7 +64,12 @@ graph_node_s *graph_node_new(void *data, char *path)
     e->num_prev = e->num_next = 0;
     e->data = data;
     pthread_mutex_init(&e->mutex, NULL);
+}
 
+graph_node_s *graph_node_new(void *data, char *path)
+{
+    graph_node_s *e = Malloc(graph_node_s);
+    _graph_node_init(e, data, path);
     return e;
 }
 
@@ -134,13 +139,25 @@ void graph_node_print(graph_node_s *e)
     _graph_node_print(e, 0);
 }
 
-graph_s *graph_new(unsigned int init_size, void(*data_destroy)(void *data))
+graph_s *graph_new(char *name, unsigned int init_size, void(*data_destroy)(void *data))
 {
     graph_s *g = Malloc(graph_s);
 
+    if (name) {
+        // We want to mmap the graph
+        g->map = mmap_new(name, MAX_MMAP_SIZE);
+        Error("Not yet implemented");
+        exit(0);
+
+    } else {
+        // We don't want to mmap the graph
+        g->map = NULL;
+        g->root = graph_node_new(NULL, "/");
+    }
+
+
     g->data_destroy = NULL;
     g->paths = hmap_new(init_size);
-    g->root = graph_node_new(NULL, "/");
     g->data_destroy = data_destroy;
     hmap_insert(g->paths, "/", g->root);
     pthread_mutex_init(&g->mutex, NULL);
@@ -153,6 +170,9 @@ void graph_destroy(graph_s *g)
     graph_node_destroy(g->root, g->data_destroy);
     hmap_destroy(g->paths);
     pthread_mutex_destroy(&g->mutex);
+    if (g->map) {
+      mmap_destroy(g->map);
+    }
     free(g);
 
     return;
@@ -258,10 +278,8 @@ static void _graph_test_traverse(graph_node_s *node, unsigned long depth)
     _graph_node_print_single(node, depth);
 }
 
-void graph_test(void)
+void _graph_test(graph_s *g)
 {
-    graph_s* g = graph_new(1024, _graph_test_data_destroy);
-
     graph_insert(g, "/foo/bar", (void*)23);
     assert(23 == (long) graph_get(g, "/foo/bar"));
     graph_insert(g, "/foo/bar", (void*)42);
@@ -278,6 +296,21 @@ void graph_test(void)
     graph_traverser_s *t = graph_traverser_new(_graph_test_traverse, 5);
     graph_traverser_traverse(t, g);
     graph_traverser_destroy(t);
+}
 
+void graph_test(void) 
+{
+    // Test without mmapping
+    graph_s *g = graph_new(NULL, 1024, _graph_test_data_destroy);
+    _graph_test(g);
     graph_destroy(g);
+
+    /*
+    // Test with mmapping
+   g = graph_new("graph_test", 1024, _graph_test_data_destroy);
+    _graph_test(g);
+   graph_destroy(g);
+   exit(3);
+   */
+
 }
