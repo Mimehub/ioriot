@@ -53,24 +53,41 @@ cleanup:
     pthread_mutex_unlock(&e->mutex);
 }
 
-
-static void _graph_node_init(graph_node_s *e, void *data, char *path)
+void graph_node_init(graph_node_s *e, void *data, char *path, unsigned long id)
 {
-    static unsigned long id = 0;
-    e->id = id++;
+    e->id = id;
     e->traversed = false;
     e->path = Clone(path);
     e->prev = e->next = NULL;
     e->num_prev = e->num_next = 0;
+    e->prev_id = e->next_id = 0;
+    e->prev_dep_id = e->next_dep_id = 0;
     e->data = data;
     pthread_mutex_init(&e->mutex, NULL);
 }
 
-graph_node_s *graph_node_new(void *data, char *path)
+graph_node_s *graph_node_new(void *data, char *path, unsigned long id)
 {
     graph_node_s *e = Malloc(graph_node_s);
-    _graph_node_init(e, data, path);
+    graph_node_init(e, data, path, id);
     return e;
+}
+
+graph_node_s *graph_node_new_mmap(graph_s *g, void *data, char *path)
+{
+    unsigned long id = g->next_node_id++;
+    graph_node_s *e = &g->nodes[id];
+    graph_node_init(e, data, path, id);
+
+    return e;
+}
+
+bool graph_node_is_traversed(graph_node_s *e)
+{
+    pthread_mutex_lock(&e->mutex);
+    bool traversed = e->traversed;
+    pthread_mutex_unlock(&e->mutex);
+    return traversed;
 }
 
 void graph_node_destroy(graph_node_s *e, void(*data_destroy)(void *data))
@@ -142,19 +159,19 @@ void graph_node_print(graph_node_s *e)
 graph_s *graph_new(char *name, unsigned int init_size, void(*data_destroy)(void *data))
 {
     graph_s *g = Malloc(graph_s);
+    g->next_node_id = 1; // Root node starts at id 1
 
     if (name) {
         // We want to mmap the graph
         g->map = mmap_new(name, MAX_MMAP_SIZE);
-        Error("Not yet implemented");
-        exit(0);
+        g->nodes = g->map->memory;
+        g->root = graph_node_new_mmap(g, NULL, "/");
 
     } else {
         // We don't want to mmap the graph
         g->map = NULL;
-        g->root = graph_node_new(NULL, "/");
+        g->root = graph_node_new(NULL, "/", g->next_node_id++);
     }
-
 
     g->data_destroy = NULL;
     g->paths = hmap_new(init_size);
@@ -167,12 +184,14 @@ graph_s *graph_new(char *name, unsigned int init_size, void(*data_destroy)(void 
 
 void graph_destroy(graph_s *g)
 {
-    graph_node_destroy(g->root, g->data_destroy);
     hmap_destroy(g->paths);
     pthread_mutex_destroy(&g->mutex);
-    if (g->map) {
-      mmap_destroy(g->map);
-    }
+
+    if (g->map)
+        mmap_destroy(g->map);
+    else
+        graph_node_destroy(g->root, g->data_destroy);
+
     free(g);
 
     return;
@@ -185,7 +204,11 @@ static graph_node_s* _graph_get_parent(graph_s *g, char *path)
     graph_node_s *parent_node = hmap_get(g->paths, parent_path);
 
     if (parent_node == NULL) {
-        parent_node = graph_node_new(NULL, parent_path);
+        if (g->map)
+            parent_node = graph_node_new_mmap(g, NULL, parent_path);
+        else
+            parent_node = graph_node_new(NULL, parent_path, g->next_node_id++);
+
         hmap_insert(g->paths, parent_path, parent_node);
         graph_node_s *grandparent_node = _graph_get_parent(g, parent_path);
         graph_node_append(grandparent_node, parent_node);
@@ -201,7 +224,11 @@ void graph_insert(graph_s *g, char *path, void *data)
         Error("insert data can not be NULL");
     }
 
-    graph_node_s *node = graph_node_new(data, path);
+    graph_node_s *node;
+    if (g->map)
+        node = graph_node_new_mmap(g, data, path);
+    else
+        node = graph_node_new(data, path, g->next_node_id++);
     pthread_mutex_lock(&g->mutex);
 
     if (g->root == NULL) {
@@ -305,12 +332,9 @@ void graph_test(void)
     _graph_test(g);
     graph_destroy(g);
 
-    /*
     // Test with mmapping
    g = graph_new("graph_test", 1024, _graph_test_data_destroy);
     _graph_test(g);
    graph_destroy(g);
-   exit(3);
-   */
-
+   exit(0);
 }
