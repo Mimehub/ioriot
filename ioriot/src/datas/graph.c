@@ -76,7 +76,7 @@ graph_node_s *graph_node_new(void *data, char *path, unsigned long id)
 graph_node_s *graph_node_new_mmap(graph_s *g, void *data, char *path)
 {
     unsigned long id = g->next_node_id++;
-    graph_node_s *e = &g->nodes[id];
+    graph_node_s *e = &g->nodes[id].node;
     graph_node_init(e, data, path, id);
 
     return e;
@@ -163,13 +163,17 @@ graph_s *graph_new(char *name, unsigned int init_size, void(*data_destroy)(void 
 
     if (name) {
         // We want to mmap the graph
-        g->map = mmap_new(name, MAX_MMAP_SIZE);
-        g->nodes = g->map->memory;
+        g->mmap = mmap_new(name, MAX_MMAP_SIZE);
+        g->nodes = g->mmap->memory;
         g->root = graph_node_new_mmap(g, NULL, "/");
+
+        graph_header_s *header = &g->nodes[0].header;
+        header->version = GRAPH_MMAP_VERSION;
 
     } else {
         // We don't want to mmap the graph
-        g->map = NULL;
+        g->mmap = NULL;
+        g->nodes = NULL;
         g->root = graph_node_new(NULL, "/", g->next_node_id++);
     }
 
@@ -187,8 +191,8 @@ void graph_destroy(graph_s *g)
     hmap_destroy(g->paths);
     pthread_mutex_destroy(&g->mutex);
 
-    if (g->map)
-        mmap_destroy(g->map);
+    if (g->mmap)
+        mmap_destroy(g->mmap);
     else
         graph_node_destroy(g->root, g->data_destroy);
 
@@ -204,7 +208,7 @@ static graph_node_s* _graph_get_parent(graph_s *g, char *path)
     graph_node_s *parent_node = hmap_get(g->paths, parent_path);
 
     if (parent_node == NULL) {
-        if (g->map)
+        if (g->mmap)
             parent_node = graph_node_new_mmap(g, NULL, parent_path);
         else
             parent_node = graph_node_new(NULL, parent_path, g->next_node_id++);
@@ -225,7 +229,7 @@ void graph_insert(graph_s *g, char *path, void *data)
     }
 
     graph_node_s *node;
-    if (g->map)
+    if (g->mmap)
         node = graph_node_new_mmap(g, data, path);
     else
         node = graph_node_new(data, path, g->next_node_id++);

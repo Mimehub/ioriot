@@ -24,6 +24,16 @@
 #define GRAPH_DEP_LEN 10
 
 /**
+ * @brief Definition of a graph mmap header 
+ *
+ * This is to hold some meta information in the mmapped
+ * graph structure.
+ */
+typedef struct graph_header_s_ {
+    int version; /**< The serialisation version */
+} graph_header_s;
+
+/**
  * @brief Definition of a graph node dependency list
  *
  * This data structure holds either the previous or the next
@@ -61,6 +71,7 @@ typedef struct graph_node_s_ {
  * array.
  */
 typedef union graph_node_u_ {
+    graph_header_s header;
     graph_node_s node;
     graph_node_dep_s dep;
 } graph_node_u;
@@ -69,8 +80,8 @@ typedef union graph_node_u_ {
  * @brief Definition of a graph data structure
  */
 typedef struct graph_s_ {
-    mmap_s *map; /**< The memory map object */
-    graph_node_s *nodes; /**< All the graph nodes */
+    mmap_s *mmap; /**< The memory map object */
+    graph_node_u *nodes; /**< All the graph nodes */
     graph_node_s *root; /**< The root nodeent */
     void (*data_destroy)(void *data); /**< Callback to destroy all data */
     hmap_s *paths; /**< The paths of the graph */
