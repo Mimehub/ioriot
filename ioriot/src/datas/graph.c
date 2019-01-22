@@ -18,41 +18,6 @@
 
 #include "graph.h"
 
-static void _graph_traverser_traverse(void *data, void *data2, void *data3)
-{
-    graph_traverser_s *t = data;
-    graph_node_s *e = data2;
-    unsigned long depth = (long) data3;
-    pthread_mutex_lock(&e->mutex);
-
-    // Check if current node is traversed already
-    if (e->traversed)
-        goto cleanup;
-
-    for (int i = 0; i < e->num_prev; ++i) {
-        graph_node_s* prev = e->prev[i];
-        pthread_mutex_lock(&prev->mutex);
-        _Bool prev_traversed = prev->traversed;
-        pthread_mutex_unlock(&prev->mutex);
-        if (!prev_traversed)
-            goto cleanup;
-    }
-
-    // Deal with current node
-    t->callback(e, depth);
-    e->traversed = true;
-    pthread_mutex_unlock(&e->mutex);
-
-    // Tell thread pool to traverse following nodes
-    for (int i = 0; i < e->num_next; ++i)
-        tpool_add_work3(t->pool, t, e->next[i], (void*)(depth+1));
-
-    return;
-
-cleanup:
-    pthread_mutex_unlock(&e->mutex);
-}
-
 void graph_node_init(graph_node_s *e, void *data, char *path, unsigned long id)
 {
     e->id = id;
@@ -75,9 +40,10 @@ graph_node_s *graph_node_new(void *data, char *path, unsigned long id)
 
 graph_node_s *graph_node_new_mmap(graph_s *g, void *data, char *path)
 {
-    unsigned long id = g->next_node_id++;
+    unsigned long id = g->next_node_id;
     graph_node_s *e = &g->nodes[id].node;
     graph_node_init(e, data, path, id);
+    g->next_node_id++;
 
     return e;
 }
@@ -135,6 +101,11 @@ void graph_node_append(graph_node_s *e, graph_node_s *e2)
     pthread_mutex_unlock(&e2->mutex);
 }
 
+void graph_node_append_mmap(graph_s *g, graph_node_s *e, graph_node_s *e2)
+{
+  // TODO
+}
+
 static void _graph_node_print_single(graph_node_s *e, unsigned long ident)
 {
     for (unsigned long i = 0; i < ident; ++i)
@@ -149,6 +120,11 @@ static void _graph_node_print(graph_node_s *e, unsigned long ident)
     for (int i = 0; i < e->num_next; ++i)
         _graph_node_print(e->next[i], ident+1);
     pthread_mutex_unlock(&e->mutex);
+}
+
+static void _graph_node_print_mmap(graph_node_s *e, unsigned long ident)
+{
+  // TODO
 }
 
 void graph_node_print(graph_node_s *e)
@@ -261,11 +237,11 @@ void* graph_get(graph_s *g, char *path)
 {
     void *data = NULL;
 
-    pthread_mutex_lock(&g->mutex);
+    //pthread_mutex_lock(&g->mutex);
     graph_node_s *node = hmap_get(g->paths, path);
     if (node != NULL)
         data = node->data;
-    pthread_mutex_unlock(&g->mutex);
+    //pthread_mutex_unlock(&g->mutex);
 
     return data;
 }
@@ -276,12 +252,52 @@ void graph_print(graph_s *g)
     graph_node_print(g->root);
 }
 
+static void _graph_traverser_traverse(void *data, void *data2, void *data3)
+{
+    graph_traverser_s *t = data;
+    graph_node_s *e = data2;
+    unsigned long depth = (long) data3;
+    pthread_mutex_lock(&e->mutex);
+
+    // Check if current node is traversed already
+    if (e->traversed)
+        goto cleanup;
+
+    for (int i = 0; i < e->num_prev; ++i) {
+        graph_node_s* prev = e->prev[i];
+        pthread_mutex_lock(&prev->mutex);
+        _Bool prev_traversed = prev->traversed;
+        pthread_mutex_unlock(&prev->mutex);
+        if (!prev_traversed)
+            goto cleanup;
+    }
+
+    // Deal with current node
+    t->callback(e, depth);
+    e->traversed = true;
+    pthread_mutex_unlock(&e->mutex);
+
+    // Tell thread pool to traverse following nodes
+    for (int i = 0; i < e->num_next; ++i)
+        tpool_add_work3(t->pool, t, e->next[i], (void*)(depth+1));
+
+    return;
+
+cleanup:
+    pthread_mutex_unlock(&e->mutex);
+}
+
+static void _graph_traverser_traverse_mmap(void *data, void *data2, void *data3)
+{
+    // TODO
+}
+
 graph_traverser_s *graph_traverser_new(void (*callback)(graph_node_s *node, unsigned long depth), int max_threads)
 {
     graph_traverser_s *t = Malloc(graph_traverser_s);
-    //tpool_add_work3(t->pool, _graph_traverser_traverse, t, e->next[i], (void*)(depth+1));
     t->pool = tpool_new(max_threads, _graph_traverser_traverse);
     t->callback = callback;
+
     return t;
 }
 

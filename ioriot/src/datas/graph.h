@@ -41,8 +41,8 @@ typedef struct graph_header_s_ {
  */
 typedef struct graph_node_dep_s_ {
     unsigned long id; /**< The id of the dependency */
-    unsigned long next_id; /**< If list is too short, continue here */
     unsigned long deps[GRAPH_DEP_LEN]; /**< The dependency list */
+    unsigned long next_id; /**< If list is too short, continue here */
 } graph_node_dep_s;
 
 /**
@@ -105,15 +105,16 @@ void graph_node_destroy(graph_node_s *e, void(*data_destroy)(void *data));
 void graph_node_append(graph_node_s *e, graph_node_s *e2);
 void graph_node_print(graph_node_s *e);
 
-graph_traverser_s *graph_traverser_new(void (*callback)(graph_node_s *node, unsigned long depth), int max_threads);
-void graph_traverser_destroy(graph_traverser_s* t);
-void graph_traverser_traverse(graph_traverser_s* t, graph_s *g);
-
 graph_s *graph_new(char *name, unsigned int init_size, void(*data_destroy)(void *data));
 void graph_destroy(graph_s* g);
 void graph_insert(graph_s* g, char *path, void *data);
 void* graph_get(graph_s* g, char *path);
 void graph_print(graph_s* g);
 void graph_test();
+
+graph_traverser_s *graph_traverser_new(void (*callback)(graph_node_s *node, unsigned long depth), int max_threads);
+void graph_traverser_destroy(graph_traverser_s* t);
+void graph_traverser_traverse(graph_traverser_s* t, graph_s *g);
+
 
 #endif // GRAPH_H
