@@ -56,7 +56,6 @@ typedef struct graph_traverser_s_ {
     void (*callback)(graph_node_s *node, unsigned long depth); /**< Callback to run on all nodes */
 } graph_traverser_s;
 
-
 graph_node_s *graph_node_new(void *data, char *key, unsigned long id);
 void graph_node_init(graph_node_s *e, void *data, char *key, unsigned long id);
 void graph_node_destroy(graph_node_s *e, void(*data_destroy)(void *data));

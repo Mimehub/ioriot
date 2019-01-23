@@ -43,6 +43,7 @@ typedef struct mgraph_node_dep_s_ {
     unsigned long id; /**< The id of the dependency */
     unsigned long deps[MGRAPH_DEP_LEN]; /**< The dependency list */
     unsigned long next_id; /**< If list is too short, continue here */
+    int num_deps; /**< How many slots of deps are occupied? */
 } mgraph_node_dep_s;
 
 /**
@@ -93,11 +94,13 @@ typedef struct mgraph_traverser_s_ {
     void (*callback)(mgraph_node_s *node, unsigned long depth); /**< Callback to run on all nodes */
 } mgraph_traverser_s;
 
+mgraph_node_dep_s *mgraph_node_dep_new(mgraph_s *g, unsigned long add_id);
+void mgraph_node_dep_add(mgraph_s *g, unsigned long dep_id, unsigned long id_add);
 
 mgraph_node_s *mgraph_node_new(mgraph_s *g, void *data, char *key);
 void mgraph_node_init(mgraph_node_s *e, void *data, char *key, unsigned long id);
 void mgraph_node_append(mgraph_s *g, mgraph_node_s *e, mgraph_node_s *e2);
-void mgraph_node_print(mgraph_node_s *e);
+void mgraph_node_print(mgraph_s *g, mgraph_node_s *e);
 
 mgraph_s *mgraph_new(char *name, unsigned int init_size, void(*data_destroy)(void *data));
 void mgraph_destroy(mgraph_s* g);

@@ -18,6 +18,45 @@
 
 #include "mgraph.h"
 
+mgraph_node_dep_s *mgraph_node_dep_new(mgraph_s *g, unsigned long id_add)
+{
+    unsigned long id = g->next_node_id++;
+    mgraph_node_dep_s *d = &g->nodes[id].dep;
+
+    d->id = id;
+    d->deps[0] = id_add;
+    d->num_deps = 1;
+
+    for (int i = 1; i < MGRAPH_DEP_LEN; ++i)
+        d->deps[i] = 0;
+
+    return d;
+}
+
+void mgraph_node_dep_add(mgraph_s *g, unsigned long dep_id, unsigned long id_add)
+{
+    mgraph_node_dep_s *d = &g->nodes[dep_id].dep;
+
+    // Find the first dependency node with a free index
+    while (d->num_deps == MGRAPH_DEP_LEN) {
+        // Get last element of deps, which points to the next mgraph_node_dep_s
+        dep_id = d->deps[MGRAPH_DEP_LEN-1];
+        d = &g->nodes[dep_id].dep;
+    }
+
+    if (d->num_deps == MGRAPH_DEP_LEN-1) {
+        // All indexes but last one are used, it means we have to create a new dep object
+        mgraph_node_dep_s *d2 = mgraph_node_dep_new(g, id_add);
+        d->deps[d->num_deps] = d2->id;
+
+    } else {
+        // There are free indexes
+        d->deps[d->num_deps] = id_add;
+    }
+
+    d->num_deps++;
+}
+
 void mgraph_node_init(mgraph_node_s *e, void *data, char *path, unsigned long id)
 {
     e->id = id;
@@ -31,10 +70,9 @@ void mgraph_node_init(mgraph_node_s *e, void *data, char *path, unsigned long id
 
 mgraph_node_s *mgraph_node_new(mgraph_s *g, void *data, char *key)
 {
-    unsigned long id = g->next_node_id;
+    unsigned long id = g->next_node_id++;
     mgraph_node_s *e = &g->nodes[id].node;
     mgraph_node_init(e, data, key, id);
-    g->next_node_id++;
     return e;
 }
 
@@ -48,31 +86,27 @@ bool mgraph_node_is_traversed(mgraph_node_s *e)
 
 void mgraph_node_append(mgraph_s *g, mgraph_node_s *e, mgraph_node_s *e2)
 {
-    pthread_mutex_lock(&e->mutex);
-    /*
-    if (e->next == NULL) {
-        e->num_next = 1;
-        e->next = Malloc(mgraph_node_s*);
-    } else {
-        e->num_next++;
-        e->next = Realloc(e->next, e->num_next, mgraph_node_s*);
-    }
-    e->next[e->num_next-1] = e2;
-    */
-    pthread_mutex_unlock(&e->mutex);
+    if (e->next_id == 0) {
+        e->next_id = e2->id;
 
-    pthread_mutex_lock(&e2->mutex);
-    /*
-    if (e2->prev == NULL) {
-        e2->num_prev = 1;
-        e2->prev = Malloc(mgraph_node_s*);
+    } else if (e->next_dep_id == 0) {
+        mgraph_node_dep_s *d = mgraph_node_dep_new(g, e2->id);
+        e->next_dep_id = d->id;
+
     } else {
-        e2->num_prev++;
-        e2->prev = Realloc(e2->prev, e2->num_prev, mgraph_node_s*);
+        mgraph_node_dep_add(g, e->next_dep_id, e2->id);
     }
-    e2->prev[e2->num_prev-1] = e;
-    */
-    pthread_mutex_unlock(&e2->mutex);
+
+    if (e2->prev_id == 0) {
+        e2->prev_id = e->id;
+
+    } else if (e2->prev_dep_id == 0) {
+        mgraph_node_dep_s *d = mgraph_node_dep_new(g, e->id);
+        e2->prev_dep_id = d->id;
+
+    } else {
+        mgraph_node_dep_add(g, e2->prev_dep_id, e->id);
+    }
 }
 
 static void _mgraph_node_print_single(mgraph_node_s *e, unsigned long ident)
@@ -82,22 +116,24 @@ static void _mgraph_node_print_single(mgraph_node_s *e, unsigned long ident)
     Put("mgraph_node:%p id:%ld path:%s", (void*)e, e->id, e->path);
 }
 
-static void _mgraph_node_print(mgraph_node_s *e, unsigned long ident)
+/*
+static void _mgraph_node_print(mgraph_s *g, mgraph_node_s *e, unsigned long ident)
 {
     pthread_mutex_lock(&e->mutex);
     _mgraph_node_print_single(e, ident);
-    /*
-    for (int i = 0; i < e->num_next; ++i)
-        _mgraph_node_print(e->next[i], ident+1);
-        */
+    if (e->next_id != 0)
+        _mgraph_node_print_single(&g->nodes[e->next_id].node, ident+1);
+    if (e->next_dep_id != 0) {
+        mgraph_node_dep_s *d = &g->nodes[e->next_dep_id].dep;
+    }
     pthread_mutex_unlock(&e->mutex);
 }
 
-
-void mgraph_node_print(mgraph_node_s *e)
+void mgraph_node_print(mgraph_s *g, mgraph_node_s *e)
 {
-    _mgraph_node_print(e, 0);
+    _mgraph_node_print(g, e, 0);
 }
+*/
 
 mgraph_s *mgraph_new(char *name, unsigned int init_size, void(*data_destroy)(void *data))
 {
@@ -195,7 +231,7 @@ void* mgraph_get(mgraph_s *g, char *path)
 void mgraph_print(mgraph_s *g)
 {
     Put("graph:%p", (void*)g);
-    mgraph_node_print(g->root);
+    //mgraph_node_print(g, g->root);
 }
 
 static void _mgraph_traverser_traverse(void *data, void *data2, void *data3)
