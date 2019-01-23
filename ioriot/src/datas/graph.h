@@ -18,32 +18,9 @@
 #include "../defaults.h"
 #include "../tpool/tpool.h"
 
-#include "mmap.h"
 #include "hmap.h"
 
 #define GRAPH_DEP_LEN 10
-
-/**
- * @brief Definition of a graph mmap header 
- *
- * This is to hold some meta information in the mmapped
- * graph structure.
- */
-typedef struct graph_header_s_ {
-    int version; /**< The serialisation version */
-} graph_header_s;
-
-/**
- * @brief Definition of a graph node dependency list
- *
- * This data structure holds either the previous or the next
- * graph nodes.
- */
-typedef struct graph_node_dep_s_ {
-    unsigned long id; /**< The id of the dependency */
-    unsigned long deps[GRAPH_DEP_LEN]; /**< The dependency list */
-    unsigned long next_id; /**< If list is too short, continue here */
-} graph_node_dep_s;
 
 /**
  * @brief Definition of a graph node
@@ -56,32 +33,14 @@ typedef struct graph_node_s_ {
     struct graph_node_s_ **next; /**< The next nodes */
     int num_prev; /**< Count of prev nodes */
     int num_next; /**< Count of next nodes */
-    unsigned long prev_id; /**< The previous node id */
-    unsigned long prev_dep_id; /**< If more than one prev, id of dependency */
-    unsigned long next_id; /**< The next node id */
-    unsigned long next_dep_id; /**< If more than one next, id of dependency */
     void *data; /**< Pointer to the stored data */
     pthread_mutex_t mutex; /**< To sync access to this graph node */
 } graph_node_s;
 
 /**
- * @brief A union needed for data serialisation
- *
- * Used to weite arrays of these data types to a file backed mmapped
- * array.
- */
-typedef union graph_node_u_ {
-    graph_header_s header;
-    graph_node_s node;
-    graph_node_dep_s dep;
-} graph_node_u;
-
-/**
  * @brief Definition of a graph data structure
  */
 typedef struct graph_s_ {
-    mmap_s *mmap; /**< The memory map object */
-    graph_node_u *nodes; /**< All the graph nodes */
     graph_node_s *root; /**< The root nodeent */
     void (*data_destroy)(void *data); /**< Callback to destroy all data */
     hmap_s *paths; /**< The paths of the graph */
@@ -99,13 +58,12 @@ typedef struct graph_traverser_s_ {
 
 
 graph_node_s *graph_node_new(void *data, char *key, unsigned long id);
-graph_node_s *graph_node_new_mmap(graph_s* g, void *data, char *key);
 void graph_node_init(graph_node_s *e, void *data, char *key, unsigned long id);
 void graph_node_destroy(graph_node_s *e, void(*data_destroy)(void *data));
 void graph_node_append(graph_node_s *e, graph_node_s *e2);
 void graph_node_print(graph_node_s *e);
 
-graph_s *graph_new(char *name, unsigned int init_size, void(*data_destroy)(void *data));
+graph_s *graph_new(unsigned int init_size, void(*data_destroy)(void *data));
 void graph_destroy(graph_s* g);
 void graph_insert(graph_s* g, char *path, void *data);
 void* graph_get(graph_s* g, char *path);
