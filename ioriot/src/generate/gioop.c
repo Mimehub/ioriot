@@ -671,7 +671,6 @@ static void _gioop_exit_group_cb(char *key, void *data, void *data2)
     char *path = data;
     gwriter_s *w = data2;
 
-    Put("DEBUG CLOSE: %s", key);
     Owriter_write(w->owriter, "%d|%s|%s (%s)\n", CLOSE, key, "close on exit_group", path);
     _graph_insert(w, path, Offset);
 }

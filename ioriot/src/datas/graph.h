@@ -68,6 +68,15 @@ void graph_destroy(graph_s* g);
 void graph_insert(graph_s* g, char *path, void *data);
 void* graph_get(graph_s* g, char *path);
 void graph_print(graph_s* g);
+
+/**
+ * @brief Serialise the graph to a file.
+ *
+ * @param g The graph.
+ * @param file The destination file.
+ */
+void graph_serialise(graph_s* g, const char *file);
+
 void graph_test();
 
 #endif // GRAPH_H

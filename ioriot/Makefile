@@ -1,4 +1,4 @@
-DEBUG=-g3 -ggdb3 -pg
+#DEBUG=-g3 -ggdb3 -pg
 NAME=ioriot
 LIBS=-pthread
 CFLAGS=-Wall -std=gnu99 -pedantic
