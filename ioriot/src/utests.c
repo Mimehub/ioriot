@@ -17,6 +17,7 @@
 #include "datas/amap.h"
 #include "datas/btree.h"
 #include "datas/graph.h"
+#include "datas/mgraph.h"
 #include "datas/hmap.h"
 #include "datas/list.h"
 #include "datas/mmap.h"
@@ -31,6 +32,9 @@ void utests_run()
 
     fprintf(stderr, "Running graph_test()\n");
     graph_test();
+
+    fprintf(stderr, "Running mgraph_test()\n");
+    mgraph_test();
 
     fprintf(stderr, "Running tpool_test()\n");
     tpool_test();

@@ -17,6 +17,8 @@
 
 /** Version of the supported .capture format */
 #define CAPTURE_VERSION 3
+/** Version of the supported .graph mmap serialisation format */
+#define GRAPH_MMAP_VERSION 1
 /** Version of the supported .replay format */
 #define REPLAY_VERSION 9999
 /** Version of I/O Riot */
