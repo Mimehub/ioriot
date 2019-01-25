@@ -271,7 +271,7 @@ static void _graph_test_traverse(graph_node_s *node, unsigned long depth)
     _graph_node_print_single(node, depth);
 }
 
-void graph_test(void)
+static void _graph_test(graph_s *g)
 {
     graph_insert(g, "/foo/bar", (void*)23);
     assert(23 == (long) graph_get(g, "/foo/bar"));
@@ -285,7 +285,6 @@ void graph_test(void)
     graph_insert(g, "/blu/foo/blu", (void*)value++);
 
     graph_print(g);
-    graph_serialise(g, "serialise.out");
 
     graph_traverser_s *t = graph_traverser_new(_graph_test_traverse, 5);
     graph_traverser_traverse(t, g);
@@ -298,5 +297,3 @@ void graph_test(void)
     _graph_test(g);
     graph_destroy(g);
 }
-
-void graph_serialise(graph_s* g, const char *file);
