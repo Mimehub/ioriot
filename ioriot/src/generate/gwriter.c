@@ -67,6 +67,7 @@ gwriter_s* gwriter_new(generate_s *g)
     w->generate = g;
     w->terminate = false;
     w->graph = graph_new(1024*1024, _graph_destroy_cb);
+    //w->graph = mgraph_new(g->name, 1024*1024, _graph_destroy_cb);
     w->fd_map = hmap_new(1024);
     w->queue = rbuffer_new(1024);
     w->owriter = owriter_new_from_fd(g->replay_fd);

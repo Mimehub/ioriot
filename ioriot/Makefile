@@ -14,6 +14,8 @@ cshell: compile
 	gdb -ex='break main; run' --args ./$(NAME)
 gdbtest: compile
 	gdb -ex=run --args ./$(NAME) -U
+gdbtest2: compile
+	gdb --args ./$(NAME) -U
 compile: $(OBJS)
 	$(CC) $(STATIC) $(DEBUG) $(LIBS) $(OBJS) -o $(NAME)
 %.o: %.c %.h

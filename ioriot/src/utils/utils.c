@@ -33,11 +33,17 @@ FILE* fnotnull(FILE *fd, const char *path, char *file, int line)
     return fd;
 }
 
-void notnum(int not, int num, char *file, int line, int count)
+int notnum(int not, int num, char *what, char *file, int line, int count)
 {
     if (not == num) {
-        Errno("%s:%d count:%d Could not allocate memory", file, line, count);
+        if (what) {
+            Errno("%s:%d count:%d (what: %s)", file, line, count, what);
+        } else {
+            Errno("%s:%d count:%d Could not allocate memory", file, line, count);
+        }
     }
+
+    return num;
 }
 
 
