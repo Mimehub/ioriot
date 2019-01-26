@@ -16,8 +16,6 @@
 #define GENERATE_H
 
 #include "gwriter.h"
-#include "../datas/amap.h"
-#include "../datas/hmap.h"
 #include "../datas/rbuffer.h"
 #include "../defaults.h"
 #include "../mounts.h"
@@ -39,14 +37,7 @@ typedef struct generate_s_ {
     char *name; /**< The name of the test specified by the user */
     FILE *replay_fd; /**< The fd of the .replay file */
     mounts_s *mps; /**< The mounts object */
-    hmap_s *mmap_map; /**< mmap address mappings */
-    amap_s *pid_map; /**< A map of all virtual process objects */
-    unsigned long num_mapped_pids; /**< The amount of mapped PIDs */
-    unsigned long num_mapped_fds; /**< The amount of mapped FDs */
-    hmap_s *vsize_map; /**< A hash map of all virtual size objects */
-    unsigned long num_vsizes; /**< The amount of virtual sizes */
     options_s *opts; /**< A pointer to the options object */
-    rbuffer_s *vfd_buffer; /**< A virtual fd buffer, for reusing these */
     rbuffer_s *reuse_queue; /**< A task buffer, for reusing these */
     struct gwriter_s_ *writer; /**< A pointer to the writer object */
 } generate_s;
@@ -74,39 +65,4 @@ void generate_destroy(generate_s* g);
  */
 status_e generate_run(options_s *opts);
 
-/**
- * @brief Callback to write the INIT section to the .replay file
- *
- * This function writes a list of all pre-required
- * paths to the .replay file. That then can be used
- * by ioriot to initialise the test enironment.
- *
- * @param data A pointer to the vsize timestamp object
- */
-void generate_write_init_cb(void *data);
-
-/**
- * @brief Retrieves the virtual size object of a given path
- *
- * A new one will be created in case there is no such virtual size object yet.
- *
- * @param g The generate object
- * @param t The task object (vfd will be stored to t->vfd)
- * @param path The file path
- * @return The virtual size object
- */
-vsize_s* generate_vsize_by_path(generate_s *g, struct gtask_s_ *t,
-                                char *path);
-
-/**
- * @brief Retrieves the virtual process object of a given real PID
- *
- * A new one will be created in case there is no such virtual process object
- * yet.
- *
- * @param g The generate object
- * @param t The task object (vfd will be stored to t->gprocess)
- */
-void generate_gprocess_by_realpid(generate_s *g, struct gtask_s_ *t);
-
-#endif // GENERATE_H
+#endif

@@ -4,24 +4,7 @@
 
 I/O Riot is an I/O benchmarking tool for Linux based operating systems which captures I/O operations on a (possibly production) server in order to replay the exact same I/O operations on a load test machine.
 
-I/O Riot is operated in 5 steps:
-
-1. Capture: Record all I/O operations over a given period of time to a capture log.
-2. Initialize: Copy the log to a load test machine and initialize the load test environment.
-3. Replay: Drop all OS caches and replay all I/O operations.
-4. Analyze: Look at the OS and hardware stats (throughput, I/O ops, load average) from the run phase and draw conclusions. The aim is to identify possible I/O bottlenecks.
-5. Repeat: Repeat steps 2-4 multiple times but adjust OS and hardware settings in order to improve I/O performance.
-
-Examples of OS and hardware settings and adjustments:
-
-* Change of system parameters (file system mount options, file system caching, file system type, file system creation flags).
-* Replay the I/O at different speed(s).
-* Replay the I/O with modified pattern(s) (e.g. remove reads from the replay journal).
-* Replay the I/O on different types of hardware.
-
-The file system fragmentation (depending on the file system type and utilisation) might affect I/O performance as well. Therefore, replaying the I/O will not give the exact same result as on a production system. But it provides a pretty good way to determine I/O bottlenecks. As a rule of thumb file system fragmentation will not be an issue, unless the file system begins to fill up. Modern file systems (such as Ext4) will slowly start to suffer from fragmentation and slow down then.
-
-## Benefits
+# I/O Riot benefits
 
 In contrast to traditional I/O benchmarking tools, I/O Riot reproduces real production I/O, and does not rely on a pre-defined set of I/O operations.
 
@@ -29,8 +12,8 @@ Also, I/O Riot only requires a server machine for capturing and another server m
 
 The benefits of I/O Riot are:
 
-* It is easy to determine whether a new hardware type is suitable for an already existing application.
-* It is easy to change OS and hardware for performance tests and optimizations.
+* It is possible to determine whether a new hardware type is suitable for an already existing application.
+* It is possible to change OS and hardware for performance tests and optimizations.
 * Findings can be applied to production machines in order to optimize OS configuration and to save hardware costs.
 * Benchmarks are based on production I/O patterns and not on artificial I/O patterns.
 * Log files can be modified to see whether a change in the application behavior would improve I/O performance (without actually touching the application code)
@@ -39,14 +22,6 @@ The benefits of I/O Riot are:
 * It captures I/O in Linux Kernel space (very efficient, no system slowdowns even under heavy I/O load)
 * It replays I/O via a tool developed in C with as little overhead as possible.
 
-# Send in patches
-
-Patches of any kind (bug fixes, new features...) are welcome! I/O Riot is new software and not everything might be perfect yet. Also, I/O Riot is used for a very specific use case at Mimecast. It may need tuning or extension for your use case. It will grow and mature over time.
-
-This is also potentially a great tool just for analysing (not replaying) the I/O, therefore it would be a great opportunity to add more features related to that (e.g. more stats, filters, etc.).
-
-Future work will also include file hole support and I/O support for memory mapped files.
-
 # How to install I/O Riot
 
 I/O Riot depends on SystemTap and a compatible version of the Linux Kernel. To get started have a read through the [installation guide](docs/markdown/installation.md).
@@ -54,6 +29,14 @@ I/O Riot depends on SystemTap and a compatible version of the Linux Kernel. To g
 # How to use I/O Riot
 
 Check out the [I/O Riot usage guide](docs/markdown/usage.md) for a full usage workflow demonstration.
+
+# Send in patches
+
+Patches of any kind (bug fixes, new features...) are welcome! I/O Riot is new software and not everything might be perfect yet. Also, I/O Riot is used for a very specific use case at Mimecast. It may need tuning or extension for your use case. It will grow and mature over time.
+
+This is also potentially a great tool just for analysing (not replaying) the I/O, therefore it would be a great opportunity to add more features related to that (e.g. more stats, filters, etc.).
+
+Future work will also include file hole support and I/O support for memory mapped files.
 
 # Appendix
 

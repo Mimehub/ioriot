@@ -217,10 +217,49 @@ void* hmap_remove_l(hmap_s *h, const long key)
     return NULL;
 }
 
+unsigned int hmap_keys_destroy(hmap_s *h, char *substr)
+{
+    return hmap_keys_destroy_cb(h, substr, NULL, NULL);
+}
+
+unsigned int hmap_keys_destroy_cb(hmap_s *h, char *substr,
+        void (*cb)(char *key, void *data, void *data2), void *data2)
+{
+    unsigned int num_destroyed = 0;
+
+    for (int i = 0; i < h->size; ++i) {
+        if (h->l[i]) {
+            list_s *l = h->l[i];
+            if (h->data_destroy)
+                h->l[i]->data_destroy = h->data_destroy;
+            num_destroyed += list_keys_destroy_cb(l, substr, cb, data2);
+
+        } else if (h->data[i] && strstr(h->keys[i], substr) != NULL) {
+            if (cb)
+                cb(h->keys[i], h->data[i], data2);
+            if (h->data_destroy)
+                h->data_destroy(h->data[i]);
+            free(h->keys[i]);
+            h->data[i] = h->keys[i] = NULL;
+            num_destroyed++;
+        }
+    }
+
+    return num_destroyed;
+}
+
+
+void* hmap_replace(hmap_s *h, char *key, void *data)
+{
+    void *removed = hmap_remove(h, key);
+    hmap_insert(h, key, data);
+    return removed;
+}
+
 void* hmap_get(hmap_s *h, char *key)
 {
     int addr = hmap_get_addr(h, key);
-    if (h->data[addr] && strcmp(h->keys[addr], key) == 0) {
+    if (h->data[addr] && Eq(h->keys[addr], key)) {
         return h->data[addr];
 
     } else if (h->l[addr]) {
@@ -228,6 +267,11 @@ void* hmap_get(hmap_s *h, char *key)
     }
 
     return NULL;
+}
+
+bool hmap_has(hmap_s *h, char *key)
+{
+    return hmap_get(h, key) != NULL;
 }
 
 void* hmap_get_l(hmap_s *h, const long key)
@@ -298,7 +342,9 @@ static void _hmap_test(hmap_s *h)
     assert(1 == hmap_insert(h, "hiring", somedata));
 
     assert(NULL != hmap_get(h, "mimecast"));
+    assert(hmap_has(h, "mimecast"));
     assert(NULL == hmap_get(h, "Mimecast"));
+    assert(!hmap_has(h, "Mimecast"));
 
     assert(NULL != hmap_remove(h, "mimecast"));
     assert(NULL == hmap_remove(h, "mimecast"));
@@ -313,7 +359,18 @@ static void _hmap_test(hmap_s *h)
     assert(0 == (long)hmap_remove(h, "another value"));
     assert(NULL == hmap_get(h, "another value"));
 
-    //hmap_print(h);
+    assert(1 == hmap_insert(h, "i am going to be replaced", (void*)321));
+    assert(321 == (long)hmap_get(h, "i am going to be replaced"));
+    assert(321 == (long)hmap_replace(h, "i am going to be replaced", (void*)3210));
+    assert(3210 == (long)hmap_get(h, "i am going to be replaced"));
+
+    assert(1 == hmap_insert(h, "hmap destroy test data", (void*)42));
+    assert(1 == hmap_insert(h, "hmap destroy test data 1", (void*)42));
+    assert(1 == hmap_insert(h, "hmap destroy test data 2", (void*)42));
+    assert(1 == hmap_insert(h, "hmap destroy test data 3", (void*)42));
+    assert(4 == hmap_keys_destroy(h, "destroy test data"));
+
+    hmap_print(h);
 }
 
 static void _hmap_test_l(hmap_s *h)

@@ -30,6 +30,8 @@
 #include "options.h"
 #include "replay/replay.h"
 #include "utests.h"
+#include "test.h"
+#include "version.h"
 #include "utils/utils.h"
 
 /**
@@ -107,6 +109,8 @@ static void _print_help(void)
     Put("\t              (default: /usr/local/ioriot)");
     Put("\t-x PID        To specify a process ID (in conjunction with -c)");
     Put("\t-m MODULE     To specify a module (in conjunction with -c)");
+    Put("\t-9            (For internal testing purposes only)");
+    Put("\t-O FLAGS      Try opening file 'test' with specified flags");
     Put("\nExample (run these commands one after another):");
     Put("\t 1.) sudo ioriot -c io.capture");
     Put("\t 2.) sudo ioriot -r io.replay -c io.capture -u paul -n test1");
@@ -130,7 +134,7 @@ int main(int argc, char **argv)
     options_s *opts = options_new();
     int opt = 0;
 
-    while ((opt = getopt(argc, argv, "Vr:R:S:c:u:i:hw:n:dDs:w:p:t:UPTx:m:")) != -1) {
+    while ((opt = getopt(argc, argv, "Vr:R:S:c:u:i:hw:n:dDs:w:p:t:UPTx:m:9O:")) != -1) {
         switch (opt) {
         case 'U':
             utests_run();
@@ -202,6 +206,8 @@ int main(int argc, char **argv)
             opts->name = optarg;
             Put("Name: %s", opts->name);
             break;
+        case 'O':
+            return open("test", atoi(optarg));
         case 'h':
             _print_help();
             Cleanup(SUCCESS);
@@ -225,6 +231,9 @@ int main(int argc, char **argv)
             opts->pid = atoi(optarg);
             Put("PID: %d", opts->pid);
             break;
+        case '9':
+            test_internal();
+            exit(0);
         default:
             _print_help();
             Cleanup(ERROR);

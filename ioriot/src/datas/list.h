@@ -48,9 +48,37 @@ int list_key_insert(list_s* l, char *key, void *data);
 int list_key_insert_l(list_s* l, const long key, void *data);
 void* list_key_remove(list_s* l, char *key);
 void* list_key_remove_l(list_s* l, const long key);
+
+/**
+ * @brief Removes and destroys all elements where key includes a substring
+ *
+ * @param l The list.
+ * @param substr The substring.
+ *
+ * @return Count of elements destroyed/removed.
+ **/
+unsigned int list_keys_destroy(list_s* l, char* substr);
+
+/**
+ * @brief Removes and destroys all elements where key includes a substring
+ *
+ * Same as list_keys_destroy but also calls a cb before destroying 
+ * the data.
+ *
+ * @param l The list.
+ * @param substr The substring.
+ * @param cb The callback function.
+ * @param data2 Additional data.
+ *
+ * @return Count of elements destroyed/removed.
+ **/
+unsigned int list_keys_destroy_cb(list_s* l, char* substr,
+        void (*cb)(char *key, void *data, void *data2), void *data2);
+
 void* list_key_get(list_s* l, char *key);
 void* list_key_get_l(list_s* l, const long key);
 void list_print(list_s* l);
 void list_test();
+
 
 #endif // LIST_H

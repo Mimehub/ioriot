@@ -25,7 +25,6 @@ void* notnull(void *p, char *file, int line, int count)
     return p;
 }
 
-
 FILE* fnotnull(FILE *fd, const char *path, char *file, int line)
 {
     if (fd == NULL) {
@@ -33,6 +32,21 @@ FILE* fnotnull(FILE *fd, const char *path, char *file, int line)
     }
     return fd;
 }
+
+int notnum(int not, int num, char *what, char *file, int line, int count)
+{
+    if (not == num) {
+        if (what) {
+            Errno("%s:%d count:%d (what: %s)", file, line, count, what);
+        } else {
+            Errno("%s:%d count:%d Could not allocate memory", file, line, count);
+        }
+    }
+
+    return num;
+}
+
+
 
 void* mmapok(void *p, char *file, int line)
 {

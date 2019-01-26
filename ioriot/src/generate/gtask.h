@@ -15,9 +15,6 @@
 #ifndef GTASK_H
 #define GTASK_H
 
-#include "vsize.h"
-
-#include "gprocess.h"
 #include "../vfd.h"
 #include "../datas/amap.h"
 #include "../datas/hmap.h"
@@ -44,6 +41,7 @@ typedef struct gtask_s_ {
     int F; /**< Arguments for fcntl syscall */
     int G; /**< Arguments for fcntl syscall */
     int fd; /**< File descriptor number */
+    char *fdid; /**< The file descriptor id (pid:fd) */
     int flags; /**< File open flags */
     int mode; /**< File open mode */
     int ret; /**< ioriot process status, SUCCESS if everything is alright */
@@ -60,10 +58,7 @@ typedef struct gtask_s_ {
     long tid; /**< The thread ID */
     long whence; /**< Whence */
     vfd_s *vfd; /**< A pointer to the virtual file descriptor */
-    struct gprocess_s_ *gprocess; /**< A pointer to the process object */
     void *generate; /**< A pointer to the generate object */
-    vsize_s *vsize2; /**< Pointer to a second virtual size object */
-    vsize_s *vsize; /**< Pointer to the virtual size object */
 #ifdef LOG_FILTERED
     char *original_line; /**< Only used for debugging purposes */
     char *filtered_where; /**< Only used for debugging purposes  */

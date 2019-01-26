@@ -46,8 +46,37 @@ int hmap_insert_l(hmap_s* h, const long key, void *data);
 int hmap_insert(hmap_s* h, char* key, void *data);
 void* hmap_remove_l(hmap_s* h, const long key);
 void* hmap_remove(hmap_s* h, char* key);
+
+/**
+ * @brief Removes and destroys all elements where key includes a substring
+ *
+ * @param h The hmap.
+ * @param substr The substring.
+ *
+ * @return Count of elements destroyed/removed.
+ **/
+unsigned int hmap_keys_destroy(hmap_s* h, char* substr);
+
+/**
+ * @brief Removes and destroys all elements where key includes a substring
+ *
+ * Same as hmap_keys_destroy but also runs a cb on the data before
+ * destroying it.
+ *
+ * @param h The hmap.
+ * @param substr The substring.
+ * @param cb The callback function.
+ * @param data2 Additional data.
+ *
+ * @return Count of elements destroyed/removed.
+ **/
+unsigned int hmap_keys_destroy_cb(hmap_s* h, char* substr,
+        void (*cb)(char *key, void *data, void *data2), void *data2);
+
+void* hmap_replace(hmap_s* h, char* key, void *data);
 void* hmap_get_l(hmap_s* h, const long key);
 void* hmap_get(hmap_s* h, char* key);
+bool hmap_has(hmap_s* h, char* key);
 unsigned int hmap_get_addr_l(hmap_s* h, const long key);
 unsigned int hmap_get_addr(hmap_s* h, char* key);
 void hmap_print(hmap_s* h);
