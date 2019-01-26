@@ -117,43 +117,43 @@ void mgraph_node_append(mgraph_s *g, mgraph_node_s *e, mgraph_node_s *e2)
     }
 }
 
-static void _mgraph_node_print_single(mgraph_node_s *e, int ident)
+static void _mgraph_node_print_single(mgraph_node_s *e, int indent)
 {
-    for (int i = 0; i < ident; ++i)
+    for (int i = 0; i < indent; ++i)
         printf(" ");
 
     Put("mgraph_node:%p id:%ld path:%s pthread:%p",
         (void*)e, e->id, e->path, (void*)pthread_self());
 }
 
-static void _mgraph_node_print_ident(mgraph_s *g, mgraph_node_s *e, int ident)
+static void _mgraph_node_print_indent(mgraph_s *g, mgraph_node_s *e, int indent)
 {
-    _mgraph_node_print_single(e, ident);
+    _mgraph_node_print_single(e, indent);
     if (e->next_id == 0)
         return;
 
     // Print direct next node
-    _mgraph_node_print_ident(g, _Node(g, e->next_id), ident+1);
+    _mgraph_node_print_indent(g, _Node(g, e->next_id), indent+1);
 
     if (e->next_dep_id == 0)
         return;
 
     // We have more next nodes, but they are stored in a dep object
-    mgraph_dep_s *d = _Dep(g, e->next_dep_id);
+   mgraph_dep_s *d = _Dep(g, e->next_dep_id);
 
-    // Go through all dependency objects iteratively
-    while (d->num_deps > 0) {
-        for (int i = 0; i < d->num_deps; ++i)
-            _mgraph_node_print_ident(g, _Node(g, d->deps[i]), ident+1);
-        if (d->next_dep_id == 0)
-            break;
-        d = _Dep(g, d->next_dep_id);
-    }
+   // Go through all dependency objects iteratively
+   while (d->num_deps > 0) {
+       for (int i = 0; i < d->num_deps; ++i)
+           _mgraph_node_print_indent(g, _Node(g, d->deps[i]), indent+1);
+       if (d->next_dep_id == 0)
+           break;
+       d = _Dep(g, d->next_dep_id);
+   }
 }
 
 void mgraph_node_print(mgraph_s *g, mgraph_node_s *e)
 {
-    _mgraph_node_print_ident(g, e, 0);
+    _mgraph_node_print_indent(g, e, 0);
 }
 
 static mgraph_s *_mgraph_init(unsigned int init_size, mmap_s *mmap, bool open_new)
@@ -212,7 +212,7 @@ void mgraph_destroy(mgraph_s *g)
         hmap_destroy(g->paths);
 
     for (int i = 0; i < MGRAPH_NUM_MUTEXES; ++i)
-        pthread_mutex_init(&g->mutexes[i], NULL);
+        pthread_mutex_destroy(&g->mutexes[i]);
 
     mmap_destroy(g->mmap);
     free(g);
