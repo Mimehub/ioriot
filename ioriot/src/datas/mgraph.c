@@ -86,7 +86,6 @@ void mgraph_node_init(mgraph_node_s *e, void *data, char *path, unsigned long id
     e->prev_id = e->next_id = 0;
     e->prev_dep_id = e->next_dep_id = 0;
     e->data = data;
-    pthread_mutex_init(&e->mutex, NULL);
 }
 
 mgraph_node_s *mgraph_node_new(mgraph_s *g, void *data, char *key)
@@ -95,14 +94,6 @@ mgraph_node_s *mgraph_node_new(mgraph_s *g, void *data, char *key)
     mgraph_node_s *e = &g->nodes[id].node;
     mgraph_node_init(e, data, key, id);
     return e;
-}
-
-bool mgraph_node_is_traversed(mgraph_node_s *e)
-{
-    pthread_mutex_lock(&e->mutex);
-    bool traversed = e->traversed;
-    pthread_mutex_unlock(&e->mutex);
-    return traversed;
 }
 
 void mgraph_node_append(mgraph_s *g, mgraph_node_s *e, mgraph_node_s *e2)
@@ -175,7 +166,8 @@ static mgraph_s *_mgraph_init(unsigned int init_size, mmap_s *mmap, bool open_ne
         g->paths = NULL;
     else
         g->paths = hmap_new(init_size);
-    pthread_mutex_init(&g->mutex, NULL);
+    for (int i = 0; i < MGRAPH_NUM_MUTEXES; ++i)
+        pthread_mutex_init(&g->mutexes[i], NULL);
 
     return g;
 }
@@ -219,7 +211,9 @@ void mgraph_destroy(mgraph_s *g)
     if (g->paths)
         hmap_destroy(g->paths);
 
-    pthread_mutex_destroy(&g->mutex);
+    for (int i = 0; i < MGRAPH_NUM_MUTEXES; ++i)
+        pthread_mutex_init(&g->mutexes[i], NULL);
+
     mmap_destroy(g->mmap);
     free(g);
 
@@ -256,12 +250,11 @@ void mgraph_insert(mgraph_s *g, char *path, void *data)
     }
 
     mgraph_node_s *node = mgraph_node_new(g, data, path);
-    pthread_mutex_lock(&g->mutex);
 
     if (g->root == NULL) {
         g->root = node;
         hmap_insert(g->paths, path, node);
-        goto cleanup;
+        return;
     }
 
     mgraph_node_s *node_ = hmap_get(g->paths, path);
@@ -274,9 +267,6 @@ void mgraph_insert(mgraph_s *g, char *path, void *data)
         mgraph_node_append(g, parent, node);
         hmap_insert(g->paths, path, node);
     }
-
-cleanup:
-    pthread_mutex_unlock(&g->mutex);
 }
 
 void* mgraph_get(mgraph_s *g, char *path)
@@ -296,12 +286,18 @@ void mgraph_print(mgraph_s *g)
     mgraph_node_print(g, g->root);
 }
 
-static bool _mgraph_traverser_node_traversed(mgraph_s *g, unsigned long id)
+static bool _mgraph_traverser_node_traversed(mgraph_s *g, unsigned long id, int mutex_id)
 {
-    mgraph_node_s *n = _Node(g, id);
-    pthread_mutex_lock(&n->mutex);
-    bool traversed = n->traversed;
-    pthread_mutex_unlock(&n->mutex);
+    mgraph_node_s *e = _Node(g, id);
+    int mutex_id2 = e->id % MGRAPH_NUM_MUTEXES;
+    if (mutex_id == mutex_id2)
+        // Same mutex, already locked!
+        return e->traversed;
+
+    pthread_mutex_t *mutex = &g->mutexes[mutex_id2];
+    pthread_mutex_lock(mutex);
+    bool traversed = e->traversed;
+    pthread_mutex_unlock(mutex);
     return traversed;
 }
 
@@ -312,59 +308,65 @@ static void _mgraph_traverser_traverse(void *data, void *data2, void *data3)
     unsigned long depth = (unsigned long)data3;
     mgraph_s *g = t->graph;
 
-    pthread_mutex_lock(&e->mutex);
+    int mutex_id = e->id % MGRAPH_NUM_MUTEXES;
+    pthread_mutex_t *mutex = &g->mutexes[mutex_id];
+    pthread_mutex_lock(mutex);
 
     // Check if current node is traversed already
     if (e->traversed)
         goto cleanup;
 
     // Check if previous node is traversed already
-    if (e->prev_id && !_mgraph_traverser_node_traversed(g, e->prev_id))
-        goto cleanup;
+    if (e->prev_id) {
+        if (!_mgraph_traverser_node_traversed(g, e->prev_id, mutex_id))
+            goto cleanup;
 
-    // In case there are multiple previous nodes go
-    // through all dependency lists and check if they
-    // are traversed already or not.
-    if (e->prev_dep_id) {
-        mgraph_dep_s *dep = _Dep(g, e->prev_dep_id);
-        while (dep->num_deps) {
-            for (int i = 0; i < dep->num_deps; ++i)
-                if (!_mgraph_traverser_node_traversed(g, dep->deps[i]))
-                    goto cleanup;
-            if (dep->next_dep_id == 0)
-                break;
-            dep = _Dep(g, dep->next_dep_id);
+        // In case there are multiple previous nodes go
+        // through all dependency lists and check if they
+        // are traversed already or not.
+        if (e->prev_dep_id) {
+            mgraph_dep_s *dep = _Dep(g, e->prev_dep_id);
+
+            while (dep->num_deps) {
+                for (int i = 0; i < dep->num_deps; ++i)
+                    if (!_mgraph_traverser_node_traversed(g, dep->deps[i], mutex_id))
+                        goto cleanup;
+                if (dep->next_dep_id == 0)
+                    break;
+                dep = _Dep(g, dep->next_dep_id);
+            }
         }
     }
 
     // Deal with current node
     t->callback(e, depth);
     e->traversed = true;
-    pthread_mutex_unlock(&e->mutex);
+    pthread_mutex_unlock(mutex);
 
     // Tell thread pool to traverse next node
-    if (e->next_id)
+    if (e->next_id) {
         tpool_add_work3(t->pool, t, _Node(g, e->next_id), (void*)(depth+1));
 
-    // In case there are multiple next nodes go
-    // through all dependency lists and add them
-    // as work to the thread pool.
-    if (e->next_dep_id) {
-        mgraph_dep_s *dep = _Dep(g, e->next_dep_id);
-        while (dep->num_deps) {
-            for (int i = 0; i < dep->num_deps; ++i)
-                tpool_add_work3(t->pool, t,
-                        _Node(g, dep->deps[i]), (void*)(depth+1));
-            if (dep->next_dep_id == 0)
-                break;
-            dep = _Dep(g, dep->next_dep_id);
+        // In case there are multiple next nodes go
+        // through all dependency lists and add them
+        // as work to the thread pool.
+        if (e->next_dep_id) {
+            mgraph_dep_s *dep = _Dep(g, e->next_dep_id);
+            while (dep->num_deps) {
+                for (int i = 0; i < dep->num_deps; ++i)
+                    tpool_add_work3(t->pool, t,
+                            _Node(g, dep->deps[i]), (void*)(depth+1));
+                if (dep->next_dep_id == 0)
+                    break;
+                dep = _Dep(g, dep->next_dep_id);
+            }
         }
     }
 
     return;
 
 cleanup:
-    pthread_mutex_unlock(&e->mutex);
+    pthread_mutex_unlock(mutex);
 }
 
 mgraph_traverser_s *mgraph_traverser_new(mgraph_s *graph,
@@ -401,6 +403,10 @@ static void _mgraph_test_traverse_callback(mgraph_node_s *e, unsigned long depth
 void mgraph_test(void) 
 {
     pthread_mutex_init(&_test_mutex, NULL);
+
+    Put("MGraph sizes: header=%ld dep:%ld node:%ld union:%ld",
+            sizeof(mgraph_header_s), sizeof(mgraph_dep_s),
+            sizeof(mgraph_node_s), sizeof(mgraph_node_u));
 
     Put("Creating 'mgraph_test'");
     mgraph_s *g = mgraph_new("mgraph_test", 1024);

@@ -21,7 +21,8 @@
 #include "mmap.h"
 #include "hmap.h"
 
-#define MGRAPH_DEP_LEN 10
+#define MGRAPH_DEP_LEN 5
+#define MGRAPH_NUM_MUTEXES 16384
 
 /**
  * @brief Definition of a graph mmap header 
@@ -59,7 +60,6 @@ typedef struct mgraph_node_s_ {
     unsigned long next_id; /**< The next node id */
     unsigned long next_dep_id; /**< If more than one next, id of dependency */
     void *data; /**< Pointer to the stored data */
-    pthread_mutex_t mutex; /**< To sync access to this graph node */
 } mgraph_node_s;
 
 /**
@@ -82,7 +82,7 @@ typedef struct mgraph_s_ {
     mgraph_node_u *nodes; /**< All the graph nodes */
     mgraph_node_s *root; /**< The root nodeent */
     hmap_s *paths; /**< The paths of the graph */
-    pthread_mutex_t mutex; /**< To sync access to this graph nodeent */
+    pthread_mutex_t mutexes[MGRAPH_NUM_MUTEXES]; /**< To sync access to the graph nodes */
     unsigned long next_node_id; /**< To get the next node id */
 } mgraph_s;
 
