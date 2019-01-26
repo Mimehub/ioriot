@@ -15,11 +15,9 @@
 #ifndef GWRITER_H
 #define GWRITER_H
 
-#include "../datas/graph.h"
-#include "../datas/hmap.h"
 #include "../datas/rbuffer.h"
 #include "../defaults.h"
-#include "../journal/owriter.h"
+#include "vsize.h"
 #include "gtask.h"
 #include "generate.h"
 
@@ -38,9 +36,6 @@ typedef struct gwriter_s_ {
     struct generate_s_ *generate; /**< The generate object */
     pthread_t pthread; /**< The posix thread */
     rbuffer_s *queue; /**< A queue of task objects */
-    owriter_s *owriter; /**< The journal offset writer */
-    hmap_s *fd_map; /**< The file descriptor map */
-    graph_s *graph; /**< The in-memory execution graph */
 } gwriter_s;
 
 /**

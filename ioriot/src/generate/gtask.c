@@ -22,7 +22,6 @@ gtask_s* gtask_new(void *generate)
     t->line = NULL;
     t->path_r = NULL;
     t->path2_r = NULL;
-    t->fdid = NULL;
 #ifdef LOG_FILTERED
     t->original_line = NULL;
 #endif
@@ -38,11 +37,8 @@ void gtask_init(gtask_s *t, char *line, const unsigned long lineno)
 
     if (t->path_r)
         free(t->path_r);
-    if (t->path2_r) {
+    if (t->path2_r)
         free(t->path2_r);
-    }
-    if (t->fdid)
-        free(t->fdid);
 
 #ifdef LOG_FILTERED
     if (t->original_line)
@@ -57,20 +53,22 @@ void gtask_init(gtask_s *t, char *line, const unsigned long lineno)
     t->count = -1;
     t->F = -1;
     t->fd = -1;
-    t->fdid = NULL;
     t->flags = -1;
     t->G = -1;
     t->has_fd = false;
+    t->vsize = NULL;
+    t->vsize2 = NULL;
     t->lineno = lineno;
     t->mapped_fd = -1;
     t->mapped_time = -1;
     t->mode = -1;
     t->offset = -1;
     t->op = NULL;
-    t->path = NULL;
-    t->path_r = NULL;
     t->path2 = NULL;
     t->path2_r = NULL;
+    t->path = NULL;
+    t->path_r = NULL;
+    t->gprocess = NULL;
     t->pid = -1;
     t->pidtid = NULL;
     t->ret = 0;

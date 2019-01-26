@@ -158,46 +158,6 @@ void* list_key_remove_l(list_s *l, const long key)
     return NULL;
 }
 
-unsigned int list_keys_destroy(list_s* l, char* substr)
-{
-    return list_keys_destroy_cb(l, substr, NULL, NULL);
-}
-
-unsigned int list_keys_destroy_cb(list_s* l, char* substr,
-        void (*cb)(char *key, void *data, void *data2), void *data2)
-{
-    unsigned int num_destroyed = 0;
-    list_elem_s *current = l->first;
-
-    while (current) {
-        list_elem_s *next = current->next;
-
-        if (current->key != NULL && strstr(current->key, substr) != NULL) {
-            if (cb)
-                cb(current->key, current->data, data2);
-
-            if (current->prev == NULL) {
-                next->prev = NULL;
-                l->first = next;
-            } else {
-                next->prev = current->prev;
-                current->prev->next = next;
-            }
-
-            free(current->key);
-            if (current->data && l->data_destroy)
-                l->data_destroy(current->data);
-            free(current);
-
-            num_destroyed++;
-        }
-
-        current = next;
-    }
-
-    return num_destroyed;
-}
-
 void* list_key_get(list_s *l, char *key)
 {
     list_elem_s *current = l->first;
@@ -288,16 +248,6 @@ void list_test(void)
 
     assert(1 == list_key_insert(l, "MiMecast", (void*)42));
     assert(42 == (long)list_key_get(l, "MiMecast"));
-
-    assert(1 == list_key_insert(l, "list keys destroy test data", somedata));
-    assert(1 == list_key_insert(l, "list keys destroy test data 0", somedata));
-    assert(1 == list_key_insert(l, "list keys destroy test data 2", somedata));
-    assert(1 == list_key_insert(l, "list keys destroy test data 3", somedata));
-    Put("Before destroying list test data");
-    list_print(l);
-    assert(4 == list_keys_destroy(l, "destroy test data"));
-    Put("After destroying list test data");
-    list_print(l);
 
     l = list_new_l();
 

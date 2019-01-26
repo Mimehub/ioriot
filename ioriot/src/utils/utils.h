@@ -78,25 +78,6 @@ void* notnull(void *p, char *file, int line, int count);
 FILE* fnotnull(FILE *fd, const char *path, char *file, int line);
 
 /**
- * @brief Check whether a return code is OK.
- *
- * This function is used in conjunction with asprintf() and co. It
- * introduces an extra sanity check whether the memory could be
- * allocated successfully or not. If not it will print out a error
- * message stating the position in the source code where the memory
- * allocation failed!
- *
- * @param not Code in case of an error.
- * @param num Return code of the function.
- * @param what Some context about this.
- * @param file The source file the memory was allocated at
- * @param line The source line number the memory was allocated at
- * @param count The amount of memory being allocated
- * @return Returns num.
- */
-int notnum(int not, int num, char *what, char *file, int line, int count);
-
-/**
  * @brief Check whether allocated memory via mmap is not null
  *
  * This function is used in conjunction with mmap() and co. It

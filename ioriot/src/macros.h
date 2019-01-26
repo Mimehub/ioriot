@@ -15,18 +15,13 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-// Cleanup helpers
 #define Cleanup(code) ret = code; goto cleanup
 #define Cleanup_unless(expr, code) \
     if (expr != code) { ret = code; goto cleanup; }
 
-// Control loop helpers
-#define Loop for(;;)
-
 // String helpers
 #define Clone(str) notnull(strdup(str),__FILE__,__LINE__,0)
-#define Eq(str1,str2) (strcmp(str1,str2) == 0)
-#define Neq(str1,str2) (strcmp(str1,str2) != 0)
+#define Eq(str1,str2) strcmp(str1,str2) == 0
 
 // Number helpers
 #define Abs(num) num >= 0 ? num : -num
@@ -42,14 +37,11 @@
     notnull(malloc(sizeof(what)),__FILE__,__LINE__,1)
 #define Calloc(count,what) \
     notnull(calloc(count,sizeof(what)),__FILE__,__LINE__,count)
-#define Realloc(where,count,what) \
-    notnull(realloc(where,count*sizeof(what)),__FILE__,__LINE__,1)
 #define Mset(where,value,count,what) \
     memset(where,value,count*sizeof(what))
-#define Asprintf(...) notnum(-1, asprintf(__VA_ARGS__),"asprintf" , __FILE__,__LINE__,1)
 
-// File helpers
-#define Fopen(path, ...) fnotnull(fopen(path, __VA_ARGS__), path, __FILE__, __LINE__)
+// Open helpers
+#define Fopen(path, mode) fnotnull(fopen(path, mode), path, __FILE__, __LINE__)
 
 // Mmap helpers
 #define Mmapshared(what) \

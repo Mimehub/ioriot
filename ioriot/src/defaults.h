@@ -15,31 +15,34 @@
 #ifndef DEFAULTS_H
 #define DEFAULTS_H
 
-#include "version.h"
 #include "utils/utils.h"
 
-#include "limits.h" // *_MAX variables
-
+/** Version of the supported .capture format */
+#define CAPTURE_VERSION 3
+/** Version of the supported .replay format */
+#define REPLAY_VERSION 2
 /** Max amount of tokens per line in the .capture file */
 #define MAX_TOKENS 10
 /** Max line length in either .capture or .replay file */
 #define MAX_LINE_LEN 1024*8
 /** Controls how many tasks can be queued and buffered per worker thread */
 #define TASK_BUFFER_PER_THREAD 512
+/** Version of I/O Riot */
+#define IORIOT_VERSION "0.5"
+/** Copyright information */
+#define IORIOT_COPYRIGHT "(c) Mimecast 2018"
 /** Max open files resource user limit */
 #define SET_RLIMIT_NOFILE 369216
 /** Max processes resource user limit */
 #define SET_RLIMIT_NPROC 30768
 /** Ignore file hole size */
 #define IGNORE_FILE_HOLE_BYTES 1024*1024*10
-/** Max mmap file size */
-#define MAX_MMAP_SIZE 4096 * (unsigned long) INT_MAX
-
 
 // The following are for debugging purposes only
 
 //#define NO_IOOP
-//#define THREAD_DEBUG //#define LOG_FILTERED
+//#define THREAD_DEBUG
+//#define LOG_FILTERED
 
 /**
  * @brief Return status codes

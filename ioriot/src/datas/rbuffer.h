@@ -68,7 +68,6 @@ void rbuffer_destroy(rbuffer_s* r);
  *
  * @param r The ring buffer object
  * @param data The data pointer
- * @return Returns false if element count not be inserted, true otherwise
  */
 bool rbuffer_insert(rbuffer_s* r, void *data);
 

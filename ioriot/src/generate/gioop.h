@@ -20,6 +20,33 @@
 #include "gtask.h"
 #include "generate.h"
 
+
+// Helper macro regarding writing the .replay file!
+
+#define Gioop_write(op, ...) \
+    fprintf(g->replay_fd, "%ld|%ld|%ld|0|0|%d|", \
+            t->mapped_time, \
+            (t->vsize ? t->vsize->id : 0),\
+            t->gprocess->mapped_pid, \
+            op); \
+    fprintf(g->replay_fd, __VA_ARGS__); \
+    fprintf(g->replay_fd, "@%ld", t->lineno); \
+    fprintf(g->replay_fd, "|\n")
+
+/**
+ * @brief Function used when closing all virtual FDs of a virtual process
+ *
+ * This function is run on all virtual file handles whenever a virtual generate
+ * process object (gprocess_s) gets destroyed. This is on an exit_group
+ * syscall (a thread group, a process with all its threads, terminates). Upon
+ * process termination Linux also closes all its file descriptors! This is what
+ * we simulate here!
+ *
+ * @param data The pointer to the virtual file descriptor object
+ * @param data2 The pointer to the corresponding generate task object.
+ */
+void gioop_close_all_vfd_cb(void *data, void *data2);
+
 /**
  * @brief Run a generate I/O operation on a given task
  *

@@ -1,4 +1,4 @@
-DEBUG=-g3 -ggdb3 -pg
+#DEBUG=-g3 -ggdb3 -pg
 NAME=ioriot
 LIBS=-pthread
 CFLAGS=-Wall -std=gnu99 -pedantic
@@ -8,14 +8,11 @@ SRCS=$(wildcard src/*.c src/*/*.c)
 HDRS=$(SRCS:.c=.h)
 OBJS=$(SRCS:.c=.o)
 all: compile
-c: clean all
 quick: clean ctags compile sudo_install
 cshell: compile
 	gdb -ex='break main; run' --args ./$(NAME)
 gdbtest: compile
 	gdb -ex=run --args ./$(NAME) -U
-gdbtest2: compile
-	gdb --args ./$(NAME) -U
 compile: $(OBJS)
 	$(CC) $(STATIC) $(DEBUG) $(LIBS) $(OBJS) -o $(NAME)
 %.o: %.c %.h
