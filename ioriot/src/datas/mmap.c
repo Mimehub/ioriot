@@ -122,7 +122,7 @@ void mmap_test_simple()
     mapped = m->memory;
     assert(strncmp(text, mapped, strlen(text)) == 0);
     assert(mapped[MAX_MMAP_SIZE-1] == 'x');
-    //mmap_unlink(m);
+    mmap_unlink(m);
     mmap_destroy(m);
 }
 

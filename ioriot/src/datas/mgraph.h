@@ -31,6 +31,7 @@
  */
 typedef struct mgraph_header_s_ {
     int version; /**< The serialisation version */
+    unsigned long next_node_id; /**< To serialise the next node id */
 } mgraph_header_s;
 
 /**
@@ -39,12 +40,12 @@ typedef struct mgraph_header_s_ {
  * This data structure holds either the previous or the next
  * graph nodes.
  */
-typedef struct mgraph_node_dep_s_ {
+typedef struct mgraph_dep_s_ {
     unsigned long id; /**< The id of the dependency */
     unsigned long deps[MGRAPH_DEP_LEN]; /**< The dependency list */
-    unsigned long next_id; /**< If list is too short, continue here */
+    unsigned long next_dep_id; /**< If list is too short, continue here */
     int num_deps; /**< How many slots of deps are occupied? */
-} mgraph_node_dep_s;
+} mgraph_dep_s;
 
 /**
  * @brief Definition of a graph node
@@ -70,7 +71,7 @@ typedef struct mgraph_node_s_ {
 typedef union mgraph_node_u_ {
     mgraph_header_s header;
     mgraph_node_s node;
-    mgraph_node_dep_s dep;
+    mgraph_dep_s dep;
 } mgraph_node_u;
 
 /**
@@ -94,8 +95,10 @@ typedef struct mgraph_traverser_s_ {
     void (*callback)(mgraph_node_s *node, unsigned long depth); /**< Callback to run on all nodes */
 } mgraph_traverser_s;
 
-mgraph_node_dep_s *mgraph_node_dep_new(mgraph_s *g, unsigned long add_id);
-void mgraph_node_dep_add(mgraph_s *g, unsigned long dep_id, unsigned long id_add);
+mgraph_dep_s *mgraph_dep_new(mgraph_s *g);
+mgraph_dep_s *mgraph_dep_new2(mgraph_s *g, unsigned long add_id);
+void mgraph_dep_add(mgraph_s *g, unsigned long dep_id, unsigned long id_add);
+void mgraph_dep_print(mgraph_s *g, unsigned long dep_id);
 
 mgraph_node_s *mgraph_node_new(mgraph_s *g, void *data, char *key);
 void mgraph_node_init(mgraph_node_s *e, void *data, char *key, unsigned long id);
@@ -103,7 +106,9 @@ void mgraph_node_append(mgraph_s *g, mgraph_node_s *e, mgraph_node_s *e2);
 void mgraph_node_print(mgraph_s *g, mgraph_node_s *e);
 
 mgraph_s *mgraph_new(char *name, unsigned int init_size, void(*data_destroy)(void *data));
+mgraph_s *mgraph_open(char *name, unsigned int init_size, void(*data_destroy)(void *data));
 void mgraph_destroy(mgraph_s* g);
+void mgraph_unlink(mgraph_s* g);
 void mgraph_insert(mgraph_s* g, char *path, void *data);
 void* mgraph_get(mgraph_s* g, char *path);
 void mgraph_print(mgraph_s* g);
