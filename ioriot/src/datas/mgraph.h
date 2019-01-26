@@ -81,7 +81,6 @@ typedef struct mgraph_s_ {
     mmap_s *mmap; /**< The memory map object */
     mgraph_node_u *nodes; /**< All the graph nodes */
     mgraph_node_s *root; /**< The root nodeent */
-    void (*data_destroy)(void *data); /**< Callback to destroy all data */
     hmap_s *paths; /**< The paths of the graph */
     pthread_mutex_t mutex; /**< To sync access to this graph nodeent */
     unsigned long next_node_id; /**< To get the next node id */
@@ -91,6 +90,7 @@ typedef struct mgraph_s_ {
  * @brief Definition of a graph traverser
  */
 typedef struct mgraph_traverser_s_ {
+    mgraph_s *graph; /**< The graph to be traversed */
     tpool_s *pool; /**< The thread pool to traverse the graph */
     void (*callback)(mgraph_node_s *node, unsigned long depth); /**< Callback to run on all nodes */
 } mgraph_traverser_s;
@@ -105,8 +105,8 @@ void mgraph_node_init(mgraph_node_s *e, void *data, char *key, unsigned long id)
 void mgraph_node_append(mgraph_s *g, mgraph_node_s *e, mgraph_node_s *e2);
 void mgraph_node_print(mgraph_s *g, mgraph_node_s *e);
 
-mgraph_s *mgraph_new(char *name, unsigned int init_size, void(*data_destroy)(void *data));
-mgraph_s *mgraph_open(char *name, unsigned int init_size, void(*data_destroy)(void *data));
+mgraph_s *mgraph_new(char *name, unsigned int init_size);
+mgraph_s *mgraph_open(char *name, unsigned int init_size);
 void mgraph_destroy(mgraph_s* g);
 void mgraph_unlink(mgraph_s* g);
 void mgraph_insert(mgraph_s* g, char *path, void *data);
@@ -114,9 +114,9 @@ void* mgraph_get(mgraph_s* g, char *path);
 void mgraph_print(mgraph_s* g);
 void mgraph_test();
 
-mgraph_traverser_s *mgraph_traverser_new(void (*callback)(mgraph_node_s *node, unsigned long depth), int max_threads);
+mgraph_traverser_s *mgraph_traverser_new(mgraph_s *graph,
+        void (*callback)(mgraph_node_s *node, unsigned long depth), int max_threads);
 void mgraph_traverser_destroy(mgraph_traverser_s* t);
-void mgraph_traverser_traverse(mgraph_traverser_s* t, mgraph_s *g);
-
+void mgraph_traverser_traverse(mgraph_traverser_s* t);
 
 #endif // MGRAPH_H

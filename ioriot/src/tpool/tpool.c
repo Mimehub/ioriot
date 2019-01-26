@@ -104,8 +104,8 @@ void tpool_add_work3(tpool_s* t, void *data, void *data2, void *data3)
 }
 static void _tpool_test_str_callback(void *data, void *data2, void *data3)
 {
-    Put("tpool_callback data:%s data2:%s data3:%s",
-        (char*)data, (char*)data2, (char*)data3);
+    Put("tpool_callback data:%s data2:%s data3:%s pthread:%p",
+        (char*)data, (char*)data2, (char*)data3, (void*)pthread_self());
 }
 
 unsigned long _tpool_test_sum = 0;

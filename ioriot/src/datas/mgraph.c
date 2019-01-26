@@ -15,12 +15,13 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <libgen.h>
+#include <sys/types.h>
 
 #include "mgraph.h"
 
 #define _Header(g) &g->nodes[0].header
-#define _Node(g, id) &g->nodes[id].node
-#define _Dep(g, id) &g->nodes[id].dep
+#define _Node(g,id) &g->nodes[id].node
+#define _Dep(g,id) &g->nodes[id].dep
 
 mgraph_dep_s *mgraph_dep_new(mgraph_s *g)
 {
@@ -81,7 +82,7 @@ void mgraph_node_init(mgraph_node_s *e, void *data, char *path, unsigned long id
 {
     e->id = id;
     e->traversed = false;
-    e->path = Clone(path);
+    e->path = path;
     e->prev_id = e->next_id = 0;
     e->prev_dep_id = e->next_dep_id = 0;
     e->data = data;
@@ -93,7 +94,6 @@ mgraph_node_s *mgraph_node_new(mgraph_s *g, void *data, char *key)
     unsigned long id = g->next_node_id++;
     mgraph_node_s *e = &g->nodes[id].node;
     mgraph_node_init(e, data, key, id);
-
     return e;
 }
 
@@ -102,7 +102,6 @@ bool mgraph_node_is_traversed(mgraph_node_s *e)
     pthread_mutex_lock(&e->mutex);
     bool traversed = e->traversed;
     pthread_mutex_unlock(&e->mutex);
-
     return traversed;
 }
 
@@ -110,22 +109,18 @@ void mgraph_node_append(mgraph_s *g, mgraph_node_s *e, mgraph_node_s *e2)
 {
     if (e->next_id == 0) {
         e->next_id = e2->id;
-
     } else if (e->next_dep_id == 0) {
         mgraph_dep_s *d = mgraph_dep_new2(g, e2->id);
         e->next_dep_id = d->id;
-
     } else {
         mgraph_dep_add(g, e->next_dep_id, e2->id);
     }
 
     if (e2->prev_id == 0) {
         e2->prev_id = e->id;
-
     } else if (e2->prev_dep_id == 0) {
         mgraph_dep_s *d = mgraph_dep_new2(g, e->id);
         e2->prev_dep_id = d->id;
-
     } else {
         mgraph_dep_add(g, e2->prev_dep_id, e->id);
     }
@@ -135,17 +130,19 @@ static void _mgraph_node_print_single(mgraph_node_s *e, int ident)
 {
     for (int i = 0; i < ident; ++i)
         printf(" ");
-    Put("mgraph_node:%p id:%ld path:%s", (void*)e, e->id, e->path);
+
+    Put("mgraph_node:%p id:%ld path:%s pthread:%p",
+            (void*)e, e->id, e->path, (void*)pthread_self());
 }
 
-static void _mgraph_node_print(mgraph_s *g, mgraph_node_s *e, int ident)
+static void _mgraph_node_print_ident(mgraph_s *g, mgraph_node_s *e, int ident)
 {
     _mgraph_node_print_single(e, ident);
     if (e->next_id == 0)
         return;
 
     // Print direct next node
-    _mgraph_node_print(g, _Node(g, e->next_id), ident+1);
+    _mgraph_node_print_ident(g, _Node(g, e->next_id), ident+1);
 
    if (e->next_dep_id == 0)
        return;
@@ -156,7 +153,7 @@ static void _mgraph_node_print(mgraph_s *g, mgraph_node_s *e, int ident)
    // Go through all dependency objects iteratively
    while (d->num_deps > 0) {
        for (int i = 0; i < d->num_deps; ++i)
-           _mgraph_node_print(g, _Node(g, d->deps[i]), ident+1);
+           _mgraph_node_print_ident(g, _Node(g, d->deps[i]), ident+1);
        if (d->next_dep_id == 0)
            break;
        d = _Dep(g, d->next_dep_id);
@@ -165,12 +162,10 @@ static void _mgraph_node_print(mgraph_s *g, mgraph_node_s *e, int ident)
 
 void mgraph_node_print(mgraph_s *g, mgraph_node_s *e)
 {
-    _mgraph_node_print(g, e, 0);
+    _mgraph_node_print_ident(g, e, 0);
 }
 
-
-static mgraph_s *_mgraph_init(unsigned int init_size, void(*data_destroy)(void *data),
-        mmap_s *mmap, bool open_new)
+static mgraph_s *_mgraph_init(unsigned int init_size, mmap_s *mmap, bool open_new)
 {
     mgraph_s *g = Malloc(mgraph_s);
 
@@ -180,17 +175,15 @@ static mgraph_s *_mgraph_init(unsigned int init_size, void(*data_destroy)(void *
         g->paths = NULL;
     else
         g->paths = hmap_new(init_size);
-    g->data_destroy = data_destroy;
     pthread_mutex_init(&g->mutex, NULL);
 
     return g;
 }
 
-mgraph_s *mgraph_new(char *name, unsigned int init_size, void(*data_destroy)(void *data))
+mgraph_s *mgraph_new(char *name, unsigned int init_size)
 {
     mmap_s *mmap = mmap_new(name, MAX_MMAP_SIZE);
-    mgraph_s *g = _mgraph_init(init_size, data_destroy, mmap, true);
-
+    mgraph_s *g = _mgraph_init(init_size, mmap, true);
     g->next_node_id = 1; // Root node starts at id 1
     g->root = mgraph_node_new(g, NULL, "/");
     hmap_insert(g->paths, "/", g->root);
@@ -198,15 +191,15 @@ mgraph_s *mgraph_new(char *name, unsigned int init_size, void(*data_destroy)(voi
     return g;
 }
 
-mgraph_s *mgraph_open(char *name, unsigned int init_size, void(*data_destroy)(void *data))
+mgraph_s *mgraph_open(char *name, unsigned int init_size)
 {
     mmap_s *mmap = mmap_open(name);
-    mgraph_s *g =  _mgraph_init(init_size, data_destroy, mmap, false);
+    mgraph_s *g =  _mgraph_init(init_size, mmap, false);
 
     mgraph_header_s *header = _Header(g);
     if (header->version != GRAPH_MMAP_VERSION) {
         Error("Can not load '%s', incompatible header version '%d', expected '%d'",
-              header->version, GRAPH_MMAP_VERSION);
+              name, header->version, GRAPH_MMAP_VERSION);
     }
     g->next_node_id = header->next_node_id;
     g->root = _Node(g, 1);
@@ -218,12 +211,14 @@ void mgraph_destroy(mgraph_s *g)
 {
     // Before destroying, set some header information which can be
     // retrieved after opening the mgraph from file later on again.
+
     mgraph_header_s *header = _Header(g);
     header->version = GRAPH_MMAP_VERSION;
     header->next_node_id = g->next_node_id;
 
     if (g->paths)
         hmap_destroy(g->paths);
+
     pthread_mutex_destroy(&g->mutex);
     mmap_destroy(g->mmap);
     free(g);
@@ -241,7 +236,6 @@ static mgraph_node_s* _mgraph_get_parent(mgraph_s *g, char *path)
 {
     char *clone = Clone(path);
     char *parent_path = dirname(clone);
-    //Debug("_mgraph_get_parent %s (parent_path: %s)", clone, parent_path);
     mgraph_node_s *parent_node = hmap_get(g->paths, parent_path);
 
     if (parent_node == NULL) {
@@ -251,15 +245,12 @@ static mgraph_node_s* _mgraph_get_parent(mgraph_s *g, char *path)
         mgraph_node_append(g, grandparent_node, parent_node);
     }
 
-    //Debug("_mgraph_get_parent %s (parent_path: %s %s %p)", clone, parent_path, parent_node->path, parent_node);
-
     free(clone);
     return parent_node;
 }
 
 void mgraph_insert(mgraph_s *g, char *path, void *data)
 {
-    //Debug("mgraph_insert %s", path);
     if (data == NULL) {
         Error("insert data can not be NULL");
     }
@@ -268,7 +259,6 @@ void mgraph_insert(mgraph_s *g, char *path, void *data)
     pthread_mutex_lock(&g->mutex);
 
     if (g->root == NULL) {
-        //Debug("mgraph_insert A %s", path);
         g->root = node;
         hmap_insert(g->paths, path, node);
         goto cleanup;
@@ -277,14 +267,10 @@ void mgraph_insert(mgraph_s *g, char *path, void *data)
     mgraph_node_s *node_ = hmap_get(g->paths, path);
 
     if (node_ != NULL) {
-        //Debug("mgraph_insert B %s", path);
         mgraph_node_append(g, node_, node);
         hmap_replace(g->paths, path, node);
-
     } else {
-        //Debug("mgraph_insert C %s", path);
         mgraph_node_s *parent = _mgraph_get_parent(g, path);
-        //Debug("mgraph_insert C %s (parent:%s %p)", path, parent->path, (void*)parent);
         mgraph_node_append(g, parent, node);
         hmap_insert(g->paths, path, node);
     }
@@ -297,11 +283,9 @@ void* mgraph_get(mgraph_s *g, char *path)
 {
     void *data = NULL;
 
-    //pthread_mutex_lock(&g->mutex);
     mgraph_node_s *node = hmap_get(g->paths, path);
     if (node != NULL)
         data = node->data;
-    //pthread_mutex_unlock(&g->mutex);
 
     return data;
 }
@@ -312,25 +296,45 @@ void mgraph_print(mgraph_s *g)
     mgraph_node_print(g, g->root);
 }
 
+static bool _mgraph_traverser_node_traversed(mgraph_s *g, unsigned long id)
+{
+    mgraph_node_s *n = _Node(g, id);
+    pthread_mutex_lock(&n->mutex);
+    bool traversed = n->traversed;
+    pthread_mutex_unlock(&n->mutex);
+    return traversed;
+}
+
 static void _mgraph_traverser_traverse(void *data, void *data2, void *data3)
 {
     mgraph_traverser_s *t = data;
     mgraph_node_s *e = data2;
-    unsigned long depth = (long) data3;
+    unsigned long depth = (unsigned long)data3;
+    mgraph_s *g = t->graph;
+
     pthread_mutex_lock(&e->mutex);
 
     // Check if current node is traversed already
     if (e->traversed)
         goto cleanup;
 
-    /*
-    for (int i = 0; i < e->num_prev; ++i) {
-        mgraph_node_s* prev = e->prev[i];
-        pthread_mutex_lock(&prev->mutex);
-        _Bool prev_traversed = prev->traversed;
-        pthread_mutex_unlock(&prev->mutex);
-        if (!prev_traversed)
-            goto cleanup;
+    // Check if previous node is traversed already
+    if (e->prev_id && !_mgraph_traverser_node_traversed(g, e->prev_id))
+        goto cleanup;
+
+    // In case there are multiple previous nodes go
+    // through all dependency lists and check if they
+    // are traversed already or not.
+    if (e->prev_dep_id) {
+        mgraph_dep_s *dep = _Dep(g, e->prev_dep_id);
+        while (dep->num_deps) {
+            for (int i = 0; i < dep->num_deps; ++i)
+                if (!_mgraph_traverser_node_traversed(g, dep->deps[i]))
+                    goto cleanup;
+            if (dep->next_dep_id == 0)
+                break;
+            dep = _Dep(g, dep->next_dep_id);
+        }
     }
 
     // Deal with current node
@@ -338,23 +342,38 @@ static void _mgraph_traverser_traverse(void *data, void *data2, void *data3)
     e->traversed = true;
     pthread_mutex_unlock(&e->mutex);
 
-    // Tell thread pool to traverse following nodes
-    for (int i = 0; i < e->num_next; ++i)
-        tpool_add_work3(t->pool, t, e->next[i], (void*)(depth+1));
+    // Tell thread pool to traverse next node
+    if (e->next_id)
+        tpool_add_work3(t->pool, t, _Node(g, e->next_id), (void*)(depth+1));
+
+    // In case there are multiple next nodes go
+    // through all dependency lists and add them
+    // as work to the thread pool.
+    if (e->next_dep_id) {
+        mgraph_dep_s *dep = _Dep(g, e->next_dep_id);
+        while (dep->num_deps) {
+            for (int i = 0; i < dep->num_deps; ++i)
+                tpool_add_work3(t->pool, t,
+                        _Node(g, dep->deps[i]), (void*)(depth+1));
+            if (dep->next_dep_id == 0)
+                break;
+            dep = _Dep(g, dep->next_dep_id);
+        }
+    }
 
     return;
-        */
 
 cleanup:
     pthread_mutex_unlock(&e->mutex);
 }
 
-mgraph_traverser_s *mgraph_traverser_new(void (*callback)(mgraph_node_s *node, unsigned long depth), int max_threads)
+mgraph_traverser_s *mgraph_traverser_new(mgraph_s *graph,
+        void (*callback)(mgraph_node_s *node, unsigned long depth), int max_threads)
 {
     mgraph_traverser_s *t = Malloc(mgraph_traverser_s);
+    t->graph = graph;
     t->pool = tpool_new(max_threads, _mgraph_traverser_traverse);
     t->callback = callback;
-
     return t;
 }
 
@@ -364,61 +383,52 @@ void mgraph_traverser_destroy(mgraph_traverser_s* t)
     free(t);
 }
 
-void mgraph_traverser_traverse(mgraph_traverser_s* t, mgraph_s *g)
+void mgraph_traverser_traverse(mgraph_traverser_s* t)
 {
-    pthread_mutex_lock(&g->mutex);
-    if (g->root != NULL)
-        tpool_add_work3(t->pool, t, g->root, (void*)0);
-    pthread_mutex_unlock(&g->mutex);
+    if (t->graph->root != NULL)
+        tpool_add_work3(t->pool, t, t->graph->root, (void*)0);
 }
 
-static void _mgraph_test_data_destroy(void *data)
-{
-    Put("Destroying %ld", (long)data)
-}
+pthread_mutex_t _test_mutex;
 
-static void _mgraph_test_traverse(mgraph_node_s *node, unsigned long depth)
+static void _mgraph_test_traverse_callback(mgraph_node_s *e, unsigned long depth)
 {
-    Put("FOO");
-    _mgraph_node_print_single(node, depth);
+    pthread_mutex_lock(&_test_mutex);
+    _mgraph_node_print_single(e, depth);
+    pthread_mutex_unlock(&_test_mutex);
 }
 
 void mgraph_test(void) 
 {
+    pthread_mutex_init(&_test_mutex, NULL);
+
     Put("Creating 'mgraph_test'");
-    mgraph_s *g = mgraph_new("mgraph_test", 1024, _mgraph_test_data_destroy);
+    mgraph_s *g = mgraph_new("mgraph_test", 1024);
 
     mgraph_insert(g, "/foo/bar", (void*)23);
     assert(23 == (long) mgraph_get(g, "/foo/bar"));
-    mgraph_insert(g, "/foo/bar", (void*)42);
+    mgraph_insert(g, "/foo/bar", (void*)23);
     mgraph_insert(g, "/foo/bar/baz", (void*)42);
     assert(42 == (long) mgraph_get(g, "/foo/bar/baz"));
 
     long value = 100;
     mgraph_insert(g, "/bla", (void*)value++);
-    mgraph_insert(g, "/", (void*)value++);
     mgraph_insert(g, "/blu/foo/blu", (void*)value++);
+    mgraph_insert(g, "/helloblu", (void*)value++);
 
     mgraph_print(g);
     mgraph_destroy(g);
 
     Put("Loading 'mgraph_test' from file");
-    g = mgraph_open("mgraph_test", 1024, _mgraph_test_data_destroy);
-    // These two don't work as we don't serialise hmap
-    //assert(23 == (long) mgraph_get(g, "/foo/bar"));
-    //assert(42 == (long) mgraph_get(g, "/foo/bar/baz"));
+    g = mgraph_open("mgraph_test", 1024);
     mgraph_print(g);
 
-    Put("Traversing 'mgraph_test'");
-
-    mgraph_traverser_s *t = mgraph_traverser_new(_mgraph_test_traverse, 5);
-    mgraph_traverser_traverse(t, g);
+    Put("Traversing 'mgraph_test' using multiple threads");
+    mgraph_traverser_s *t = mgraph_traverser_new(g, _mgraph_test_traverse_callback, 5);
+    mgraph_traverser_traverse(t);
     mgraph_traverser_destroy(t);
 
     mgraph_unlink(g);
     mgraph_destroy(g);
-
-    exit(0);
-
-
+    pthread_mutex_destroy(&_test_mutex);
 }

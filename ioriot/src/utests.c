@@ -27,6 +27,9 @@
 
 void utests_run()
 {
+    fprintf(stderr, "Running tpool_test()\n");
+    tpool_test();
+
     fprintf(stderr, "Running mmap_test()\n");
     mmap_test();
 
@@ -35,9 +38,6 @@ void utests_run()
 
     fprintf(stderr, "Running mgraph_test()\n");
     mgraph_test();
-
-    fprintf(stderr, "Running tpool_test()\n");
-    tpool_test();
 
     fprintf(stderr, "Running hmap_test()\n");
     hmap_test();
