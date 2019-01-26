@@ -25,7 +25,7 @@
 #define MGRAPH_NUM_MUTEXES 16384
 
 /**
- * @brief Definition of a graph mmap header 
+ * @brief Definition of a graph mmap header
  *
  * This is to hold some meta information in the mmapped
  * graph structure.

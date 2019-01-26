@@ -164,7 +164,7 @@ unsigned int list_keys_destroy(list_s* l, char* substr)
 }
 
 unsigned int list_keys_destroy_cb(list_s* l, char* substr,
-        void (*cb)(char *key, void *data, void *data2), void *data2)
+                                  void (*cb)(char *key, void *data, void *data2), void *data2)
 {
     unsigned int num_destroyed = 0;
     list_elem_s *current = l->first;

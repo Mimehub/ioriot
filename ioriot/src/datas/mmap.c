@@ -17,8 +17,7 @@
 static void _mmap_mmap(mmap_s *m)
 {
     m->memory = mmap(0, m->size, PROT_READ | PROT_WRITE, MAP_SHARED, m->fd, 0);
-    if (m->memory == MAP_FAILED)
-    {
+    if (m->memory == MAP_FAILED) {
         Error("Error mmapping file '%s'", m->file);
     }
 }
@@ -60,8 +59,7 @@ mmap_s* mmap_new(char *name, unsigned long size)
     }
 
     // Write '\0' at the end to the file
-    if (write(m->fd, "", 1) == -1)
-    {
+    if (write(m->fd, "", 1) == -1) {
         Errno("Could not write last byte to file '%s'", m->file);
     }
     //assert(size == cur_offset+1);
@@ -70,7 +68,8 @@ mmap_s* mmap_new(char *name, unsigned long size)
     return m;
 }
 
-mmap_s* mmap_open(char *name) {
+mmap_s* mmap_open(char *name)
+{
     mmap_s *m = Malloc(mmap_s);
     Asprintf(&m->file, "%s.mmap", name);
 

@@ -291,7 +291,7 @@ static void _graph_test(graph_s *g)
     graph_traverser_destroy(t);
 }
 
-void graph_test(void) 
+void graph_test(void)
 {
     graph_s *g = graph_new(1024, _graph_test_data_destroy);
     _graph_test(g);

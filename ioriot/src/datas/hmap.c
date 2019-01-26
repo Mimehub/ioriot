@@ -223,7 +223,7 @@ unsigned int hmap_keys_destroy(hmap_s *h, char *substr)
 }
 
 unsigned int hmap_keys_destroy_cb(hmap_s *h, char *substr,
-        void (*cb)(char *key, void *data, void *data2), void *data2)
+                                  void (*cb)(char *key, void *data, void *data2), void *data2)
 {
     unsigned int num_destroyed = 0;
 

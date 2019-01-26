@@ -71,7 +71,7 @@ unsigned int hmap_keys_destroy(hmap_s* h, char* substr);
  * @return Count of elements destroyed/removed.
  **/
 unsigned int hmap_keys_destroy_cb(hmap_s* h, char* substr,
-        void (*cb)(char *key, void *data, void *data2), void *data2);
+                                  void (*cb)(char *key, void *data, void *data2), void *data2);
 
 void* hmap_replace(hmap_s* h, char* key, void *data);
 void* hmap_get_l(hmap_s* h, const long key);

@@ -21,10 +21,10 @@
  * @brief Definition of a mmap
  */
 typedef struct mmap_s_ {
-  char *file; /**< The file name */
-  int fd; /**< The fd of the mapped file */
-  unsigned long size; /**< The size of the file */
-  void *memory; /**< The mapped memory */
+    char *file; /**< The file name */
+    int fd; /**< The fd of the mapped file */
+    unsigned long size; /**< The size of the file */
+    void *memory; /**< The mapped memory */
 } mmap_s;
 
 /**

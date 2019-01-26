@@ -123,7 +123,7 @@ static void _mgraph_node_print_single(mgraph_node_s *e, int ident)
         printf(" ");
 
     Put("mgraph_node:%p id:%ld path:%s pthread:%p",
-            (void*)e, e->id, e->path, (void*)pthread_self());
+        (void*)e, e->id, e->path, (void*)pthread_self());
 }
 
 static void _mgraph_node_print_ident(mgraph_s *g, mgraph_node_s *e, int ident)
@@ -135,20 +135,20 @@ static void _mgraph_node_print_ident(mgraph_s *g, mgraph_node_s *e, int ident)
     // Print direct next node
     _mgraph_node_print_ident(g, _Node(g, e->next_id), ident+1);
 
-   if (e->next_dep_id == 0)
-       return;
+    if (e->next_dep_id == 0)
+        return;
 
     // We have more next nodes, but they are stored in a dep object
-   mgraph_dep_s *d = _Dep(g, e->next_dep_id);
+    mgraph_dep_s *d = _Dep(g, e->next_dep_id);
 
-   // Go through all dependency objects iteratively
-   while (d->num_deps > 0) {
-       for (int i = 0; i < d->num_deps; ++i)
-           _mgraph_node_print_ident(g, _Node(g, d->deps[i]), ident+1);
-       if (d->next_dep_id == 0)
-           break;
-       d = _Dep(g, d->next_dep_id);
-   }
+    // Go through all dependency objects iteratively
+    while (d->num_deps > 0) {
+        for (int i = 0; i < d->num_deps; ++i)
+            _mgraph_node_print_ident(g, _Node(g, d->deps[i]), ident+1);
+        if (d->next_dep_id == 0)
+            break;
+        d = _Dep(g, d->next_dep_id);
+    }
 }
 
 void mgraph_node_print(mgraph_s *g, mgraph_node_s *e)
@@ -355,7 +355,7 @@ static void _mgraph_traverser_traverse(void *data, void *data2, void *data3)
             while (dep->num_deps) {
                 for (int i = 0; i < dep->num_deps; ++i)
                     tpool_add_work3(t->pool, t,
-                            _Node(g, dep->deps[i]), (void*)(depth+1));
+                                    _Node(g, dep->deps[i]), (void*)(depth+1));
                 if (dep->next_dep_id == 0)
                     break;
                 dep = _Dep(g, dep->next_dep_id);
@@ -400,13 +400,13 @@ static void _mgraph_test_traverse_callback(mgraph_node_s *e, unsigned long depth
     pthread_mutex_unlock(&_test_mutex);
 }
 
-void mgraph_test(void) 
+void mgraph_test(void)
 {
     pthread_mutex_init(&_test_mutex, NULL);
 
     Put("MGraph sizes: header=%ld dep:%ld node:%ld union:%ld",
-            sizeof(mgraph_header_s), sizeof(mgraph_dep_s),
-            sizeof(mgraph_node_s), sizeof(mgraph_node_u));
+        sizeof(mgraph_header_s), sizeof(mgraph_dep_s),
+        sizeof(mgraph_node_s), sizeof(mgraph_node_u));
 
     Put("Creating 'mgraph_test'");
     mgraph_s *g = mgraph_new("mgraph_test", 1024);
