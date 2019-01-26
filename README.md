@@ -1,8 +1,8 @@
 # I/O Riot
 
-## Overview
+<img src=docs/ioriot_small.png align=right />
 
-I/O Riot is an I/O benchmarking tool for Linux based operating systems which captures I/O operations on a (possibly production) server in order to replay the exact same I/O operations on a load test machine.
+...is an I/O benchmarking tool for Linux based operating systems which captures I/O operations on a (possibly production) server in order to replay the exact same I/O operations on a load test machine.
 
 # I/O Riot benefits
 
