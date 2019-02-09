@@ -1,0 +1,44 @@
+#!/usr/bin/env stap
+
+# Copyright 2019 Mimecast Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This script is used to capture all I/O syscalls.
+
+global PROBE_ENTRY_TIMES%[16000]
+
+# Stop probing after 1h (for safety)
+probe timer.s(3600) {
+    exit();
+}
+
+probe syscall.* {
+    if (pid() == target()) {
+        PROBE_ENTRY_TIMES[tid(),name] = gettimeofday_ns()
+    }
+}
+
+probe syscall.*.return {
+    if (pid() == target()) {
+        ns = gettimeofday_ns()
+        printf("t=%ld;:,D=%ld;:,i=%d:%d;:,o=%s;:,\n",
+                ns, ns-PROBE_ENTRY_TIMES[tid(),name],
+                pid(),
+                tid(),
+                name);
+        delete PROBE_ENTRY_TIMES[tid(),name]
+    }
+}
+
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
