@@ -2,8 +2,8 @@ KERNEL ?= $(shell uname -r)
 DESTDIR=/opt/ioriot
 PWD=$(shell pwd)
 all:
-	$(MAKE) -C systemtap
-	$(MAKE) -C ioriot
+	$(MAKE) -j 4 -C systemtap
+	$(MAKE) -j 4 -C ioriot
 install:
 	$(MAKE) -C systemtap install
 	$(MAKE) -C ioriot install

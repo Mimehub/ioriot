@@ -1,43 +1,27 @@
 KERNEL ?= $(shell uname -r)
 PROCESSOR ?= $(shell uname -p)
 DESTDIR ?= /opt/ioriot/systemtap/$(KERNEL)
-UPDATEURI = http://debuginfo.centos.org/7/$(PROCESSOR)
-DOWNLOADIR ?= ./downloads
-all: prepare compile
+STP = $(wildcard src/*.stp)
+MODULES = $(subst src/,,$(subst .stp,,$(STP)))
+all: compile
+compile: $(MODULES)
 prepare:
 	sed 's/execname() != "stapio"/pid() == target()/' ./src/ioriot.stp > ./src/targetedioriot.stp
 	sed 's/execname() != "stapio"/execname() == "java"/' ./src/ioriot.stp > ./src/javaioriot.stp
-compile:
-	@echo Compiling for Kernel version $(KERNEL)
-	for stp in ioriot javaioriot targetedioriot; do \
-		stap -v ./src/$$stp.stp -p 4 -r $(KERNEL) -m $$stp \
-		-D MAXSTRINGLEN=255 -D MAXACTION=10000 -D MAXSKIPPED=10000\
-		-g --suppress-time-limits --suppress-handler-errors; \
-	done
+$(MODULES): prepare
+	stap -v ./src/$@.stp -p 4 -r $(KERNEL) -m $@ \
+		-D MAXSTRINGLEN=255 -D MAXACTION=10000 -D MAXSKIPPED=10000 \
+		-g --suppress-time-limits --suppress-handler-errors
 testsystemtap:
 	stap -v -e 'probe vfs.read {printf("read performed\n"); exit()}'
 clean:
 	@echo Cleaning modules
-	test -f ioriot.ko && rm -v ioriot.ko || exit 0
-	test -f javaioriot.ko && rm -v javaioriot.ko || exit 0
-	test -f targetedioriot.ko && rm -v targetedioriot.ko || exit 0
+	find . -name \*.ko -delete || exit 0
 install:
 	test -d $(DESTDIR) || mkdir -p $(DESTDIR)
-	test -f ioriot.ko && cp -v ioriot.ko $(DESTDIR)/ || exit 0
-	test -f javaioriot.ko && cp -v javaioriot.ko $(DESTDIR)/ || exit 0
-	test -f targetedioriot.ko && cp -v targetedioriot.ko $(DESTDIR)/ || exit 0
+	cp -vp *.ko $(DESTDIR)/
 uninstall:
 	test ! -z "$(DESTDIR)" && test -d $(DESTDIR)/ && find $(DESTDIR) -name \*.ko -delete || exit 0
 deinstall: uninstall
-debuginfodownload:
-	test -d $(DOWNLOADIR) || mkdir -p $(DOWNLOADIR)
-	test -f $(DOWNLOADIR)/kernel-debuginfo-$(KERNEL).rpm || \
-		wget -P $(DOWNLOADIR) $(UPDATEURI)/kernel-debuginfo-$(KERNEL).rpm
-	test -f $(DOWNLOADIR)/kernel-debuginfo-common-$(PROCESSOR)-$(KERNEL).rpm || \
-		wget -P $(DOWNLOADIR) $(UPDATEURI)/kernel-debuginfo-common-$(PROCESSOR)-$(KERNEL).rpm
-debuginfolocalinstall:
-	#yum remove kernel-debuginfo kernel-debuginfo-common-$(PROCESSOR)
-	yum localinstall $(DOWNLOADIR)/kernel-debuginfo-common-$(PROCESSOR)-$(KERNEL).rpm \
-		$(DOWNLOADIR)/kernel-debuginfo-$(KERNEL).rpm
 todo:
 	fgrep TODO ./src/*
